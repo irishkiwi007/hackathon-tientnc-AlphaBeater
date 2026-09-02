@@ -25,3 +25,11 @@ class Settings(BaseSettings):
         if not self.alpaca_paper:
             raise ValueError("AlphaBeater currently permits Alpaca paper trading only")
 
+    def require_alpaca_credentials(self) -> tuple[str, str]:
+        self.assert_paper_trading()
+        if self.alpaca_api_key is None or self.alpaca_secret_key is None:
+            raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY are required")
+        return (
+            self.alpaca_api_key.get_secret_value(),
+            self.alpaca_secret_key.get_secret_value(),
+        )

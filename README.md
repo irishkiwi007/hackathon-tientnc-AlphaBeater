@@ -32,11 +32,20 @@ pytest
 
 The default model is `gemma-4-26b-a4b-it`. Set `GEMMA_MODEL` in `.env` to try `gemma-4-31b-it` or another compatible model. Do not commit `.env` or API keys.
 
+After adding paper API keys to `.env`, check the connection with:
+
+```bash
+alphabeater-check
+```
+
+This command only reads account information. It does not place an order.
+
 ## Current repository layout
 
 ```text
 src/alphabeater/
   agents/       hypothesis and factor proposal agents
+  alpaca/       read-only paper account integration
   llm/          provider-neutral interface and Gemma adapter
   config.py     environment configuration
   dsl.py        safe factor-expression validation (never eval)

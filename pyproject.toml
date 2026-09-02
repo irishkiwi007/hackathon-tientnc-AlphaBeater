@@ -11,10 +11,14 @@ license = { file = "LICENSE" }
 requires-python = ">=3.11"
 authors = [{ name = "AlphaBeater contributors" }]
 dependencies = [
+  "alpaca-py>=0.44,<0.45",
   "google-genai>=1.0",
   "pydantic>=2.10",
   "pydantic-settings>=2.7",
 ]
+
+[project.scripts]
+alphabeater-check = "alphabeater.check_setup:main"
 
 [project.optional-dependencies]
 dev = [
@@ -31,4 +35,3 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-
