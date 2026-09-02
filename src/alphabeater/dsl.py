@@ -52,3 +52,13 @@ def validate_expression(expression: str) -> None:
             (ast.Expression, ast.Load),
         ):
             raise DSLValidationError(f"syntax node is not allowed: {type(node).__name__}")
+
+
+def referenced_fields(expression: str) -> set[str]:
+    validate_expression(expression)
+    tree = ast.parse(expression, mode="eval")
+    return {
+        node.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name) and node.id in ALLOWED_FIELDS
+    }

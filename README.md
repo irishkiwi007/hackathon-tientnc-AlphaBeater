@@ -40,6 +40,20 @@ alphabeater-check
 
 This command only reads account information. It does not place an order.
 
+To check stock and options market data access:
+
+```bash
+alphabeater-data-check
+```
+
+To run Gemma hypothesis and factor generation on recent Alpaca data:
+
+```bash
+alphabeater-research-demo
+```
+
+Generated expressions are validated and calculated locally. If an expression cannot be calculated, the factor agent sends the error back to Gemma and asks for a corrected expression.
+
 ## Current repository layout
 
 ```text
