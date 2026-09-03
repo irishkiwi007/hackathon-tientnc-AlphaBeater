@@ -49,6 +49,17 @@ class MonitorEvent(BaseModel):
     alpaca_id: str | None = None
 
 
+class PositionSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    symbol: str
+    quantity: Decimal
+    cost_basis: Decimal
+    market_value: Decimal
+    unrealized_pl: Decimal
+    return_pct: Decimal
+
+
 class MonitorReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -56,6 +67,7 @@ class MonitorReport(BaseModel):
     market_open: bool
     open_orders: int
     positions: int
+    position_snapshots: list[PositionSnapshot]
     events: list[MonitorEvent]
 
 
@@ -105,10 +117,25 @@ class PaperPositionMonitor:
             market_open=market_open,
             open_orders=len(orders),
             positions=len(positions),
+            position_snapshots=[self._position_snapshot(position) for position in positions],
             events=events,
         )
         self._append_journal(report)
         return report
+
+    @staticmethod
+    def _position_snapshot(position: Any) -> PositionSnapshot:
+        cost_basis = abs(Decimal(str(position.cost_basis)))
+        market_value = abs(Decimal(str(position.market_value)))
+        unrealized_pl = market_value - cost_basis
+        return PositionSnapshot(
+            symbol=str(position.symbol),
+            quantity=Decimal(str(position.qty)),
+            cost_basis=cost_basis,
+            market_value=market_value,
+            unrealized_pl=unrealized_pl,
+            return_pct=(Decimal(0) if cost_basis == 0 else unrealized_pl / cost_basis),
+        )
 
     def _inspect_order(
         self, order: Any, checked_at: datetime, market_open: bool

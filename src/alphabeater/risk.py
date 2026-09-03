@@ -45,6 +45,7 @@ class RiskCheck(BaseModel):
     passed: bool
     actual: str
     limit: str
+    blocking: bool = True
 
 
 class RiskDecision(BaseModel):
@@ -55,6 +56,7 @@ class RiskDecision(BaseModel):
     projected_options_exposure: Decimal
     checks: list[RiskCheck]
     rejected_reasons: list[str]
+    advisory_reasons: list[str] = Field(default_factory=list)
     evaluated_at: datetime
 
 
@@ -70,6 +72,7 @@ class OptionsRiskGate:
         *,
         now: datetime | None = None,
         require_market_open: bool = True,
+        enforce_research: bool = True,
     ) -> RiskDecision:
         evaluated_at = now or datetime.now(UTC)
         quote_time = plan.quote_timestamp
@@ -175,16 +178,30 @@ class OptionsRiskGate:
                 f">= {-self.policy.max_holdout_drawdown:.2%}",
             ),
         ]
+        research_checks = {
+            "holdout sample",
+            "holdout Sharpe",
+            "holdout excess return",
+            "holdout drawdown",
+        }
         checks = [
-            RiskCheck(name=name, passed=passed, actual=actual, limit=limit)
+            RiskCheck(
+                name=name,
+                passed=passed,
+                actual=actual,
+                limit=limit,
+                blocking=enforce_research or name not in research_checks,
+            )
             for name, passed, actual, limit in raw_checks
         ]
-        rejected = [check.name for check in checks if not check.passed]
+        rejected = [check.name for check in checks if not check.passed and check.blocking]
+        advisory = [check.name for check in checks if not check.passed and not check.blocking]
         return RiskDecision(
             approved=not rejected,
             max_allowed_trade_loss=max_trade_loss,
             projected_options_exposure=projected_exposure,
             checks=checks,
             rejected_reasons=rejected,
+            advisory_reasons=advisory,
             evaluated_at=evaluated_at,
         )

@@ -93,3 +93,27 @@ def test_rejects_trade_that_risks_too_much() -> None:
 
     assert not decision.approved
     assert "single-trade maximum loss" in decision.rejected_reasons
+
+
+def test_experiment_keeps_failed_research_checks_advisory() -> None:
+    now = datetime(2026, 9, 2, 14, 31, tzinfo=UTC)
+    weak = metrics().model_copy(
+        update={"sharpe_ratio": -0.2, "excess_return": -0.1}
+    )
+
+    decision = OptionsRiskGate().evaluate(
+        plan(now),
+        weak,
+        context(),
+        now=now,
+        enforce_research=False,
+    )
+
+    assert decision.approved
+    assert decision.rejected_reasons == []
+    assert decision.advisory_reasons == ["holdout Sharpe", "holdout excess return"]
+    assert all(
+        not check.blocking
+        for check in decision.checks
+        if check.name in {"holdout Sharpe", "holdout excess return"}
+    )

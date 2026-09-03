@@ -54,6 +54,8 @@ AlphaBeater only creates long calls and long puts. The options selector requires
 
 The risk gate is deterministic and runs after contract selection. Paper execution requires an explicit command-line flag, a current quote, an open market, positive holdout excess return, acceptable drawdown and Sharpe, sufficient option buying power, and all portfolio limits. It routes approved orders through Alpaca's official MCP `place_option_order` tool with paper mode forced on.
 
+Experimental forward-paper mode is a separate execution policy. Research-performance failures are recorded as non-blocking advisories, while every operational, liquidity, account, and loss limit remains blocking. Its purpose is to collect forward paper evidence and demonstrate execution, not to claim a validated strategy.
+
 The monitor can run once or continuously. Automatic cancellations and sell-to-close exits remain disabled unless separately enabled in local configuration.
 
 ## Model

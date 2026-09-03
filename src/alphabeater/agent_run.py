@@ -99,12 +99,30 @@ def _development_passes(result: DevelopmentBacktestResult) -> bool:
     ) and _period_passes(result.validation, minimum_observations=40)
 
 
+def _best_experimental_candidate(
+    results: list[tuple[int, FactorCandidate, DevelopmentBacktestResult]],
+) -> tuple[int, FactorCandidate, DevelopmentBacktestResult]:
+    """Choose the least unstable candidate without claiming research approval."""
+    return max(
+        results,
+        key=lambda item: (
+            min(item[2].training.sharpe_ratio, item[2].validation.sharpe_ratio),
+            min(item[2].training.excess_return, item[2].validation.excess_return),
+            -max(
+                abs(item[2].training.max_drawdown),
+                abs(item[2].validation.max_drawdown),
+            ),
+        ),
+    )
+
+
 def run_workflow(
     *,
     execute: bool,
     output_path: Path,
     research_batches: int = 3,
     research_input: Path | None = None,
+    paper_experiment: bool = False,
 ) -> dict[str, Any]:
     if not 1 <= research_batches <= 5:
         raise ValueError("research_batches must be between 1 and 5")
@@ -179,7 +197,8 @@ def run_workflow(
         }
         for item_batch, item_candidate, item_backtest in evaluated
     ]
-    if not any(item["development_eligible"] for item in candidate_records):
+    has_eligible_candidate = any(item["development_eligible"] for item in candidate_records)
+    if not has_eligible_candidate and not paper_experiment:
         output = {
             "run_at": now.isoformat(),
             "mode": "paper",
@@ -213,27 +232,15 @@ def run_workflow(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
         return output
-    selected_batch, candidate, _ = _best_candidate(evaluated)
+    if has_eligible_candidate:
+        selected_batch, candidate, _ = _best_candidate(evaluated)
+    else:
+        selected_batch, candidate, _ = _best_experimental_candidate(evaluated)
     hypothesis = hypotheses[selected_batch - 1]
     # Candidate selection is complete before the locked holdout is evaluated.
     backtest = backtester.run(frame, candidate.expression, candidate.expected_direction)
 
     strategy = LongPremiumStrategy()
-    signal = strategy.derive_signal(frame, candidate)
-    latest_close = Decimal(
-        str(
-            frame.loc[frame["symbol"] == signal.underlying]
-            .sort_values("timestamp")
-            .iloc[-1]["close"]
-        )
-    )
-    quotes = market_data.get_option_chain(
-        signal.underlying,
-        expiration_start=(now + timedelta(days=21)).date(),
-        expiration_end=(now + timedelta(days=45)).date(),
-        strike_min=latest_close * Decimal("0.88"),
-        strike_max=latest_close * Decimal("1.12"),
-    )
     trading_client = TradingClient(api_key, secret_key, paper=True)
     account = AlpacaPaperAccount(trading_client).get_summary()
     risk_gate = OptionsRiskGate()
@@ -241,13 +248,36 @@ def run_workflow(
         account.equity * risk_gate.policy.max_trade_risk_pct,
         account.options_buying_power,
     )
-    plan = strategy.build_plan(
-        signal,
-        candidate,
-        quotes,
-        maximum_loss_budget=maximum_loss_budget,
-        now=now,
-    )
+    plan = None
+    plan_errors = []
+    for signal in strategy.derive_signals(frame, candidate):
+        latest_close = Decimal(
+            str(
+                frame.loc[frame["symbol"] == signal.underlying]
+                .sort_values("timestamp")
+                .iloc[-1]["close"]
+            )
+        )
+        quotes = market_data.get_option_chain(
+            signal.underlying,
+            expiration_start=(now + timedelta(days=21)).date(),
+            expiration_end=(now + timedelta(days=45)).date(),
+            strike_min=latest_close * Decimal("0.88"),
+            strike_max=latest_close * Decimal("1.12"),
+        )
+        try:
+            plan = strategy.build_plan(
+                signal,
+                candidate,
+                quotes,
+                maximum_loss_budget=maximum_loss_budget,
+                now=now,
+            )
+            break
+        except ValueError as exc:
+            plan_errors.append(f"{signal.underlying}: {exc}")
+    if plan is None:
+        raise ValueError("; ".join(plan_errors))
 
     context = _portfolio_context(trading_client, plan.contract_symbol)
     decision = risk_gate.evaluate(
@@ -256,6 +286,7 @@ def run_workflow(
         context,
         now=now,
         require_market_open=execute,
+        enforce_research=not paper_experiment,
     )
     receipt = None
     if execute and decision.approved:
@@ -270,6 +301,10 @@ def run_workflow(
     output: dict[str, Any] = {
         "run_at": now.isoformat(),
         "mode": "paper",
+        "execution_policy": (
+            "experimental_forward_paper" if paper_experiment else "research_validated"
+        ),
+        "research_qualified": has_eligible_candidate,
         "execution_requested": execute,
         "mcp_execution": True,
         "research_protocol": {
@@ -321,6 +356,14 @@ def run_workflow(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the full AlphaBeater paper workflow")
     parser.add_argument(
+        "--paper-experiment",
+        action="store_true",
+        help=(
+            "allow an explicitly unvalidated paper trade while keeping operational and "
+            "financial risk checks blocking"
+        ),
+    )
+    parser.add_argument(
         "--reuse-research",
         type=Path,
         help="reuse hypotheses and candidates from an earlier audit artifact",
@@ -351,6 +394,7 @@ def main() -> int:
             output_path=args.output,
             research_batches=args.research_batches,
             research_input=args.reuse_research,
+            paper_experiment=args.paper_experiment,
         )
     except (APIError, OSError, RuntimeError, ValueError) as exc:
         print(f"AlphaBeater run failed: {exc}")

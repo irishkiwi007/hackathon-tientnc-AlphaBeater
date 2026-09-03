@@ -112,6 +112,13 @@ class LongPremiumStrategy:
         frame: pd.DataFrame,
         candidate: FactorCandidate,
     ) -> FactorSignal:
+        return self.derive_signals(frame, candidate)[0]
+
+    def derive_signals(
+        self,
+        frame: pd.DataFrame,
+        candidate: FactorCandidate,
+    ) -> list[FactorSignal]:
         ordered = frame.sort_values(["symbol", "timestamp"]).reset_index(drop=True)
         values = FactorCalculator().calculate(ordered, candidate.expression)
         signals = ordered[["symbol", "timestamp"]].copy()
@@ -142,7 +149,7 @@ class LongPremiumStrategy:
 
         if not latest:
             raise ValueError("factor did not produce a usable current signal")
-        return max(latest, key=lambda signal: abs(signal.predicted_score))
+        return sorted(latest, key=lambda signal: abs(signal.predicted_score), reverse=True)
 
     def build_plan(
         self,

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -43,5 +44,7 @@ def test_monitor_executes_stop_loss_when_enabled(tmp_path: Path) -> None:
 
     assert report.events[0].action == "sell_to_close"
     assert report.events[0].automatic_action_taken
+    assert report.position_snapshots[0].unrealized_pl == -150
+    assert report.position_snapshots[0].return_pct == Decimal("-0.3")
     assert len(client.submitted) == 1
     assert (tmp_path / "journal.jsonl").exists()

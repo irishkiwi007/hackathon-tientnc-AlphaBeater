@@ -100,6 +100,14 @@ alphabeater-run --execute
 
 Even with that flag, no order is sent unless all 16 risk checks pass. Live trading is rejected by configuration. Orders use deterministic client order IDs so retries cannot silently create a second position.
 
+An explicitly unvalidated forward paper experiment is available for execution demonstrations:
+
+```bash
+alphabeater-run --execute --paper-experiment
+```
+
+This mode may promote the least unstable development candidate when none is research-qualified. Historical performance checks remain visible as non-blocking advisories. Account status, paper-only enforcement, market hours, duplicate exposure, quantity, premium loss, total exposure, buying power, daily loss, quote freshness, and spread remain blocking. The audit labels the execution policy `experimental_forward_paper`; it must not be described as validated or predictably profitable.
+
 ## Autonomous monitoring
 
 One read-only check:
@@ -122,6 +130,7 @@ By default, the monitor only records recommended actions. Set `ENABLE_AUTOMATIC_
 - Entry limit order remains open for 15 minutes
 
 Events are appended to `artifacts/trading-journal.jsonl`.
+Each monitor report also records position cost basis, market value, unrealized paper P&L, and return percentage.
 
 ## Risk policy
 
