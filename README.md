@@ -22,13 +22,13 @@ The strategy buys premium only. Its maximum loss is the premium paid. It does no
 
 ## Latest verified run
 
-On September 3, 2026, the corrected directional evaluator processed 25 saved Gemma candidates. No candidate had positive excess return, at least 0.50 Sharpe, and acceptable drawdown in both training and validation. The agent recorded `abstained_before_locked_test`, did not inspect the locked test, and did not construct or submit an order.
+On September 3, 2026, Gemma 4 31B generated 15 valid, executable factor candidates. Seven had positive raw training returns and five had positive raw validation returns, but none were positive and stable in both periods after applying the full gate. The agent recorded `abstained_before_locked_test`, did not inspect the locked test, and did not construct or submit an order.
 
 This is expected risk behavior, not a profitable result. The audit is stored locally in `artifacts/final-evaluation.json` and is excluded from Git because generated artifacts may contain account or order details.
 
 ## Research model and evaluation
 
-Gemma `gemma-4-26b-a4b-it` generates independent hypotheses and five candidate DSL formulas per hypothesis. The five available precommitted themes are trend, mean reversion, volatility regime, price-volume confirmation, and breakout/range behavior. No predictive ML model is trained or fitted. Python calculates every factor and return deterministically.
+Gemma `gemma-4-31b-it` generates independent hypotheses and five candidate DSL formulas per hypothesis. The five available precommitted themes are trend, mean reversion, volatility regime, price-volume confirmation, and breakout/range behavior. No predictive ML model is trained or fitted. Python calculates every factor and return deterministically.
 
 The chronological split is 50/20/30. The first half checks initial consistency, the next 20 percent selects one candidate, and the last 30 percent is a locked test used only after selection. A failed locked test stops the run. Repeated runs against the same locked period must not be used to search for a passing result.
 
@@ -58,7 +58,7 @@ Add a Google AI Studio key and Alpaca paper keys to `.env`. Never commit that fi
 
 ```dotenv
 GEMINI_API_KEY=...
-GEMMA_MODEL=gemma-4-26b-a4b-it
+GEMMA_MODEL=gemma-4-31b-it
 ALPACA_API_KEY=...
 ALPACA_SECRET_KEY=...
 ALPACA_PAPER=true

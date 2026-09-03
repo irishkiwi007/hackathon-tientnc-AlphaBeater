@@ -24,7 +24,7 @@ class GemmaLLM:
         self,
         *,
         api_key: str,
-        model: str = "gemma-4-26b-a4b-it",
+        model: str = "gemma-4-31b-it",
         max_attempts: int = 3,
     ) -> None:
         try:

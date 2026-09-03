@@ -58,4 +58,4 @@ The monitor can run once or continuously. Automatic cancellations and sell-to-cl
 
 ## Model
 
-`gemma-4-26b-a4b-it` is the default generator model. It proposes natural-language hypotheses and constrained factor formulas. It is not trained or fine-tuned by AlphaBeater, and no predictive statistical model is fitted. Candidate selection and the locked test are deterministic Python calculations. The pipeline uses a `StructuredLLM` interface, so the generator can be changed without rewriting the agents.
+`gemma-4-31b-it` is the default generator model. It proposes natural-language hypotheses and constrained factor formulas. It is not trained or fine-tuned by AlphaBeater, and no predictive statistical model is fitted. Candidate selection and the locked test are deterministic Python calculations. The pipeline uses a `StructuredLLM` interface, so the generator can be changed without rewriting the agents.

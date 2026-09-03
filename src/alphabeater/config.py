@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     gemini_api_key: SecretStr | None = None
-    gemma_model: str = "gemma-4-26b-a4b-it"
+    gemma_model: str = "gemma-4-31b-it"
 
     alpaca_api_key: SecretStr | None = None
     alpaca_secret_key: SecretStr | None = None
