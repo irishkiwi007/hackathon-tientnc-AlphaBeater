@@ -12,6 +12,7 @@
   --green: #178b62;
   --amber: #f2b544;
   --red: #d45252;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 * { box-sizing: border-box; }
