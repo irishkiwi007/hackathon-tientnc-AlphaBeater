@@ -105,8 +105,8 @@ class OptionsRiskGate:
             (
                 "no duplicate exposure",
                 not context.duplicate_order_or_position,
-                str(context.duplicate_order_or_position),
-                "false",
+                "duplicate found" if context.duplicate_order_or_position else "none",
+                "none",
             ),
             (
                 "contract quantity",

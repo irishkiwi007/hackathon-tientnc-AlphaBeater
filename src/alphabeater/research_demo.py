@@ -28,10 +28,15 @@ def _evidence(frame: pd.DataFrame) -> list[str]:
         ordered = values.sort_values("timestamp")
         latest = ordered.iloc[-1]
         return_5d = latest["close"] / ordered.iloc[-6]["close"] - 1
+        return_20d = latest["close"] / ordered.iloc[-21]["close"] - 1
+        return_60d = latest["close"] / ordered.iloc[-61]["close"] - 1
         volume_ratio = latest["volume"] / ordered.tail(20)["volume"].mean()
+        distance_from_mean = latest["close"] / ordered.tail(20)["close"].mean() - 1
+        volatility = ordered["close"].pct_change().tail(20).std(ddof=1) * (252**0.5)
         evidence.append(
-            f"{symbol}: 5-day return {return_5d:.2%}; "
-            f"latest volume is {volume_ratio:.2f} times its 20-day mean"
+            f"{symbol}: returns 5d {return_5d:.2%}, 20d {return_20d:.2%}, "
+            f"60d {return_60d:.2%}; close vs 20d mean {distance_from_mean:.2%}; "
+            f"20d annualized volatility {volatility:.2%}; relative volume {volume_ratio:.2f}x"
         )
     return evidence
 
@@ -70,7 +75,7 @@ def main() -> int:
         }
         for candidate in factors.candidates:
             values = calculator.calculate(frame, candidate.expression)
-            backtest = backtester.run(
+            backtest = backtester.run_development(
                 frame,
                 candidate.expression,
                 candidate.expected_direction,
@@ -79,7 +84,7 @@ def main() -> int:
                 {
                     **candidate.model_dump(mode="json"),
                     "calculated_values": int(values.notna().sum()),
-                    "backtest": backtest.model_dump(mode="json"),
+                    "development_backtest": backtest.model_dump(mode="json"),
                 }
             )
     except (APIError, ValueError) as exc:

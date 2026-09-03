@@ -35,9 +35,22 @@ def test_backtest_uses_next_period_returns_and_reports_holdout() -> None:
     )
 
     assert result.holdout.observations == 30
-    assert result.holdout.total_return > 0
-    assert result.holdout.excess_return > 0
+    assert result.training.observations == 50
+    assert result.validation.observations == 20
     assert result.holdout_start < result.holdout_end
+    assert result.training_end < result.validation_start
+    assert result.validation_end < result.holdout_start
+
+
+def test_development_run_does_not_return_locked_holdout() -> None:
+    result = FactorBacktester(transaction_cost_bps=0).run_development(
+        trending_market_frame(),
+        "returns(close, 5)",
+        Direction.POSITIVE,
+    )
+
+    assert result.validation.observations == 20
+    assert "holdout" not in result.model_dump()
 
 
 def test_transaction_costs_reduce_returns() -> None:

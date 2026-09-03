@@ -45,7 +45,8 @@ class FactorAgent:
                     "mul(returns(close,5),relative_volume(volume,20)). "
                     "Do not subtract or divide an expression by itself. required_fields "
                     "must list exactly the fields used in the expression. "
-                    "Propose one to three different candidates."
+                    "Propose exactly five meaningfully different candidates. Avoid minor "
+                    "window-only variants of the same formula."
                     f"{feedback}"
                 ),
             )
@@ -67,6 +68,8 @@ class FactorAgent:
         proposal: FactorProposal,
         execution_check: Callable[[str], None] | None,
     ) -> None:
+        if len(proposal.candidates) != 5:
+            raise ValueError("exactly five distinct candidates are required")
         for candidate in proposal.candidates:
             validate_expression(candidate.expression)
             unknown_fields = set(candidate.required_fields) - ALLOWED_FIELDS

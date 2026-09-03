@@ -6,14 +6,14 @@ The LLM does research. Regular Python code calculates factors, ranks contracts, 
 
 ## Current workflow
 
-1. Read recent SPY, QQQ, and IWM bars from Alpaca's IEX feed.
+1. Read recent SPY, QQQ, and IWM bars from Alpaca's IEX feed and summarize 5/20/60-day returns, price location, volatility, and relative volume.
 2. Ask Gemma for a falsifiable hypothesis grounded in that snapshot.
-3. Ask Gemma to translate the hypothesis into the project's small factor DSL.
+3. Run three precommitted research batches. Each asks Gemma for a distinct hypothesis and five different factor candidates in the project's small factor DSL.
 4. Validate and calculate each expression without `eval`.
-5. Backtest with next-session returns, a recent 30 percent holdout, and 5 bps costs.
-6. Choose the best candidate by holdout Sharpe, excess return, then drawdown.
+5. Standardize each factor over the trailing 60 sessions, select the strongest absolute signal, and simulate its call/put direction with next-session underlying returns and 5 bps costs. Split observations chronologically into 50 percent training, 20 percent validation, and a locked 30 percent test period.
+6. Reject candidates unless both training and validation have positive excess return, at least 0.50 Sharpe, and acceptable drawdown. Rank survivors using validation data only. Then evaluate the winner once on the locked test period.
 7. Convert its current standardized signal into a long call or long put.
-8. Search the Alpaca indicative option chain for 21 to 45 DTE, 0.35 to 0.60 absolute delta, and a maximum 20 percent spread.
+8. Search the Alpaca indicative option chain for 21 to 45 DTE, 0.35 to 0.60 absolute delta, a maximum 20 percent spread, and premium within the account risk budget.
 9. Run 16 deterministic account, position, liquidity, loss, and backtest checks.
 10. If `--execute` was explicitly supplied and all checks pass, submit one buy-to-open limit order to the Alpaca paper account through `place_option_order` on the official Alpaca MCP server.
 11. Monitor open orders and positions for stale entries, stop loss, take profit, and expiry rules.
@@ -22,22 +22,25 @@ The strategy buys premium only. Its maximum loss is the premium paid. It does no
 
 ## Latest verified run
 
-On September 2, 2026, the complete non-executing workflow produced:
+On September 3, 2026, the corrected directional evaluator processed 25 saved Gemma candidates. No candidate had positive excess return, at least 0.50 Sharpe, and acceptable drawdown in both training and validation. The agent recorded `abstained_before_locked_test`, did not inspect the locked test, and did not construct or submit an order.
 
-- Selected factor: `momentum_volume_divergence`
-- Expression: `div(returns(close,5),relative_volume(volume,20))`
-- Holdout return: 8.35 percent
-- Equal-weight benchmark: 7.70 percent
-- Holdout excess return: 0.65 percent
-- Holdout Sharpe: 1.29
-- Holdout maximum drawdown: -6.66 percent
-- Proposed contract: `IWM260925C00295000`
-- Limit midpoint: $4.43
-- Maximum loss: $443
+This is expected risk behavior, not a profitable result. The audit is stored locally in `artifacts/final-evaluation.json` and is excluded from Git because generated artifacts may contain account or order details.
 
-The agent did not send the order. The market was closed and the option quote was 27,844 seconds old, above the 900-second limit. That rejection is the expected behavior of the risk gate.
+## Research model and evaluation
 
-These results are one historical experiment, not evidence that the strategy will remain profitable. The holdout is a recent time split, not a preregistered out-of-sample study.
+Gemma `gemma-4-26b-a4b-it` generates independent hypotheses and five candidate DSL formulas per hypothesis. The five available precommitted themes are trend, mean reversion, volatility regime, price-volume confirmation, and breakout/range behavior. No predictive ML model is trained or fitted. Python calculates every factor and return deterministically.
+
+The chronological split is 50/20/30. The first half checks initial consistency, the next 20 percent selects one candidate, and the last 30 percent is a locked test used only after selection. A failed locked test stops the run. Repeated runs against the same locked period must not be used to search for a passing result.
+
+During hackathon development, the holdout was inspected while the evaluation algorithm itself was being corrected. Current results are therefore exploratory, not a publication-grade untouched test. A future paper should freeze the pipeline and collect a new forward test period.
+
+The backtest is a directional underlying-return proxy for comparing factors. It does not reconstruct historical option-chain prices, implied volatility, or option fills. Paper execution supplies the separate end-to-end options evidence.
+
+The complete protocol, period boundaries, model name, development metrics, selected test metrics, and risk decision are saved in `artifacts/latest-run.json`.
+
+Use `--research-batches 1` through `5` to set the precommitted search size. The default is three. Batches are generated before the locked test is evaluated and never receive test feedback.
+
+Use `--reuse-research artifacts/previous-run.json` to recalculate a saved candidate batch without spending Gemini quota or changing the precommitted formulas.
 
 ## Setup
 

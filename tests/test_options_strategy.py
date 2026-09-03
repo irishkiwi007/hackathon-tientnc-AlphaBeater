@@ -69,3 +69,30 @@ def test_selects_liquid_near_fifty_delta_contract() -> None:
     assert plan.limit_price == Decimal("5.00")
     assert plan.maximum_loss == Decimal("500.00")
     assert plan.client_order_id.startswith("alphabeater-")
+
+
+def test_contract_selection_respects_maximum_loss_budget() -> None:
+    now = datetime(2026, 9, 2, 14, 31, tzinfo=UTC)
+    signal = FactorSignal(
+        underlying="SPY",
+        raw_value=0.02,
+        z_score=1.2,
+        predicted_score=1.2,
+        right=OptionRight.CALL,
+        as_of=now - timedelta(days=1),
+    )
+    quotes = [
+        quote("SPY260925C00500000", delta="0.49", bid="4.98", ask="5.14"),
+        quote("SPY260925C00510000", delta="0.40", bid="3.90", ask="4.10"),
+    ]
+
+    plan = LongPremiumStrategy().build_plan(
+        signal,
+        candidate(),
+        quotes,
+        maximum_loss_budget=Decimal(500),
+        now=now,
+    )
+
+    assert plan.contract_symbol == "SPY260925C00510000"
+    assert plan.maximum_loss == Decimal("400.00")

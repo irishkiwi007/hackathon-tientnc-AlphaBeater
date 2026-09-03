@@ -151,12 +151,17 @@ class LongPremiumStrategy:
         quotes: list[OptionQuote],
         *,
         quantity: int = 1,
+        maximum_loss_budget: Decimal | None = None,
         now: datetime | None = None,
     ) -> OptionTradePlan:
         if quantity < 1:
             raise ValueError("quantity must be positive")
         created_at = now or datetime.now(UTC)
-        ranked: list[tuple[Decimal, Decimal, int, OptionContract, OptionQuote]] = []
+        if maximum_loss_budget is not None and maximum_loss_budget <= 0:
+            raise ValueError("maximum loss budget must be positive")
+        ranked: list[
+            tuple[Decimal, Decimal, int, OptionContract, OptionQuote, Decimal]
+        ] = []
 
         for quote in quotes:
             try:
@@ -184,6 +189,10 @@ class LongPremiumStrategy:
                 continue
             if relative_spread > self._max_relative_spread:
                 continue
+            limit_price = midpoint.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            maximum_loss = limit_price * Decimal(100 * quantity)
+            if maximum_loss_budget is not None and maximum_loss > maximum_loss_budget:
+                continue
             ranked.append(
                 (
                     abs(absolute_delta - Decimal("0.50")),
@@ -191,19 +200,25 @@ class LongPremiumStrategy:
                     abs(days - 30),
                     contract,
                     quote,
+                    limit_price,
                 )
             )
 
         if not ranked:
-            raise ValueError("no option contract passed the DTE, delta, quote, and spread filters")
-        _, relative_spread, _, contract, quote = min(ranked, key=lambda item: item[:3])
+            budget_text = (
+                " and premium budget" if maximum_loss_budget is not None else ""
+            )
+            raise ValueError(
+                "no option contract passed the DTE, delta, quote, spread"
+                f"{budget_text} filters"
+            )
+        _, relative_spread, _, contract, quote, limit_price = min(
+            ranked, key=lambda item: item[:3]
+        )
         assert quote.bid_price is not None
         assert quote.ask_price is not None
         assert quote.delta is not None
         assert quote.quote_timestamp is not None
-        limit_price = ((quote.bid_price + quote.ask_price) / 2).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
         maximum_loss = limit_price * Decimal(100 * quantity)
         identifier = hashlib.sha256(
             f"{contract.symbol}:{candidate.name}:{signal.as_of.isoformat()}".encode()
