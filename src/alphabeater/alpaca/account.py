@@ -20,6 +20,7 @@ class PaperAccountSummary(BaseModel):
     status: str
     currency: str
     equity: Decimal
+    last_equity: Decimal
     buying_power: Decimal
     options_buying_power: Decimal
     options_approved_level: int
@@ -49,10 +50,10 @@ class AlpacaPaperAccount:
             status=str(account.status),
             currency=account.currency or "USD",
             equity=Decimal(account.equity or "0"),
+            last_equity=Decimal(account.last_equity or account.equity or "0"),
             buying_power=Decimal(account.buying_power or "0"),
             options_buying_power=Decimal(account.options_buying_power or "0"),
             options_approved_level=account.options_approved_level or 0,
             options_trading_level=account.options_trading_level or 0,
             trading_blocked=bool(account.trading_blocked),
         )
-

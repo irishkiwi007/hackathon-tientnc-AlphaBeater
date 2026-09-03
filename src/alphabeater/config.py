@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     alpaca_api_key: SecretStr | None = None
     alpaca_secret_key: SecretStr | None = None
     alpaca_paper: bool = Field(default=True)
+    enable_paper_orders: bool = Field(default=False)
+    enable_automatic_exits: bool = Field(default=False)
 
     def require_gemini_key(self) -> str:
         if self.gemini_api_key is None:

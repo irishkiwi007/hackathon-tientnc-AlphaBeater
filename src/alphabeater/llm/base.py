@@ -15,4 +15,3 @@ class StructuredLLM(Protocol):
         system_prompt: str,
         user_prompt: str,
     ) -> ResponseT: ...
-

@@ -12,6 +12,7 @@ requires-python = ">=3.11"
 authors = [{ name = "AlphaBeater contributors" }]
 dependencies = [
   "alpaca-py>=0.44,<0.45",
+  "fastmcp>=3.1,<4",
   "google-genai>=1.0",
   "pandas>=2.2,<4",
   "pydantic>=2.10",
@@ -22,6 +23,9 @@ dependencies = [
 alphabeater-check = "alphabeater.check_setup:main"
 alphabeater-data-check = "alphabeater.check_data:main"
 alphabeater-research-demo = "alphabeater.research_demo:main"
+alphabeater-monitor = "alphabeater.monitor:main"
+alphabeater-mcp-check = "alphabeater.mcp_check:main"
+alphabeater-run = "alphabeater.agent_run:main"
 
 [project.optional-dependencies]
 dev = [

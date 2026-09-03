@@ -18,4 +18,3 @@ class ResearchPipeline:
         hypothesis = self._idea_agent.propose(observation, seed_insight=seed_insight)
         factors = self._factor_agent.propose(hypothesis)
         return ResearchBundle(hypothesis=hypothesis, factors=factors)
-

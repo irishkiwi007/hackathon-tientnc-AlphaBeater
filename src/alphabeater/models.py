@@ -52,4 +52,3 @@ class FactorProposal(StrictModel):
 class ResearchBundle(StrictModel):
     hypothesis: MarketHypothesis
     factors: FactorProposal
-

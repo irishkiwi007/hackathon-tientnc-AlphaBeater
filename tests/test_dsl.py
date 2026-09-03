@@ -28,4 +28,3 @@ def test_valid_expressions(expression: str) -> None:
 def test_rejects_unregistered_syntax(expression: str) -> None:
     with pytest.raises(DSLValidationError):
         validate_expression(expression)
-

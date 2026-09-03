@@ -23,8 +23,6 @@ class IdeaAgent:
                 "Include conditions that would falsify it and never invent statistics."
             ),
             user_prompt=(
-                f"Snapshot: {observation.model_dump_json()}\n"
-                f"Optional researcher insight: {seed}"
+                f"Snapshot: {observation.model_dump_json()}\nOptional researcher insight: {seed}"
             ),
         )
-

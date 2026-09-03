@@ -8,6 +8,7 @@ from alpaca.common.exceptions import APIError
 
 from alphabeater.agents import FactorAgent, IdeaAgent
 from alphabeater.alpaca import AlpacaMarketData, StockBar
+from alphabeater.backtest import FactorBacktester
 from alphabeater.config import Settings
 from alphabeater.factor_calculator import FactorCalculator
 from alphabeater.llm import GemmaLLM
@@ -62,16 +63,23 @@ def main() -> int:
             calculator.calculate(frame, expression)
 
         factors = FactorAgent(llm).propose(hypothesis, execution_check=execution_check)
+        backtester = FactorBacktester()
         output = {
             "hypothesis": hypothesis.model_dump(mode="json"),
             "factors": [],
         }
         for candidate in factors.candidates:
             values = calculator.calculate(frame, candidate.expression)
+            backtest = backtester.run(
+                frame,
+                candidate.expression,
+                candidate.expected_direction,
+            )
             output["factors"].append(
                 {
                     **candidate.model_dump(mode="json"),
                     "calculated_values": int(values.notna().sum()),
+                    "backtest": backtest.model_dump(mode="json"),
                 }
             )
     except (APIError, ValueError) as exc:
