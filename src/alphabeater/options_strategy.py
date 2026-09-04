@@ -166,9 +166,7 @@ class LongPremiumStrategy:
         created_at = now or datetime.now(UTC)
         if maximum_loss_budget is not None and maximum_loss_budget <= 0:
             raise ValueError("maximum loss budget must be positive")
-        ranked: list[
-            tuple[Decimal, Decimal, int, OptionContract, OptionQuote, Decimal]
-        ] = []
+        ranked: list[tuple[Decimal, Decimal, int, OptionContract, OptionQuote, Decimal]] = []
 
         for quote in quotes:
             try:
@@ -212,16 +210,11 @@ class LongPremiumStrategy:
             )
 
         if not ranked:
-            budget_text = (
-                " and premium budget" if maximum_loss_budget is not None else ""
-            )
+            budget_text = " and premium budget" if maximum_loss_budget is not None else ""
             raise ValueError(
-                "no option contract passed the DTE, delta, quote, spread"
-                f"{budget_text} filters"
+                f"no option contract passed the DTE, delta, quote, spread{budget_text} filters"
             )
-        _, relative_spread, _, contract, quote, limit_price = min(
-            ranked, key=lambda item: item[:3]
-        )
+        _, relative_spread, _, contract, quote, limit_price = min(ranked, key=lambda item: item[:3])
         assert quote.bid_price is not None
         assert quote.ask_price is not None
         assert quote.delta is not None

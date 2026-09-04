@@ -97,9 +97,7 @@ def test_rejects_trade_that_risks_too_much() -> None:
 
 def test_experiment_keeps_failed_research_checks_advisory() -> None:
     now = datetime(2026, 9, 2, 14, 31, tzinfo=UTC)
-    weak = metrics().model_copy(
-        update={"sharpe_ratio": -0.2, "excess_return": -0.1}
-    )
+    weak = metrics().model_copy(update={"sharpe_ratio": -0.2, "excess_return": -0.1})
 
     decision = OptionsRiskGate().evaluate(
         plan(now),

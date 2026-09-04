@@ -72,9 +72,7 @@ class FactorBacktester:
         expression: str,
         direction: Direction,
     ) -> DevelopmentBacktestResult:
-        net_returns, benchmark, turnover, costs = self._return_series(
-            frame, expression, direction
-        )
+        net_returns, benchmark, turnover, costs = self._return_series(frame, expression, direction)
         train_end, validation_end = self._split_points(len(net_returns))
         return DevelopmentBacktestResult(
             training_start=net_returns.index[0].isoformat(),
@@ -95,9 +93,7 @@ class FactorBacktester:
         expression: str,
         direction: Direction,
     ) -> BacktestResult:
-        net_returns, benchmark, turnover, costs = self._return_series(
-            frame, expression, direction
-        )
+        net_returns, benchmark, turnover, costs = self._return_series(frame, expression, direction)
         _, validation_end = self._split_points(len(net_returns))
         development = self.run_development(frame, expression, direction)
         test_returns = net_returns.iloc[validation_end:]
@@ -137,9 +133,9 @@ class FactorBacktester:
         strongest = standardized.abs().max(axis=1)
         winners = standardized.abs().eq(strongest, axis=0) & standardized.notna()
         signs = standardized.gt(0).astype(float) - standardized.lt(0).astype(float)
-        weights = (winners * signs).div(
-            winners.sum(axis=1).replace(0, float("nan")), axis=0
-        ).fillna(0)
+        weights = (
+            (winners * signs).div(winners.sum(axis=1).replace(0, float("nan")), axis=0).fillna(0)
+        )
         held_weights = weights.shift(1).fillna(0)
         asset_returns = close.pct_change(fill_method=None)
         gross_returns = (held_weights * asset_returns).sum(axis=1, min_count=1).fillna(0)
@@ -153,7 +149,9 @@ class FactorBacktester:
         return net_returns, benchmark, turnover, costs
 
     def _split_points(self, observations: int) -> tuple[int, int]:
-        train_end = max(1, int(observations * (1 - self._validation_fraction - self._test_fraction)))
+        train_end = max(
+            1, int(observations * (1 - self._validation_fraction - self._test_fraction))
+        )
         validation_end = max(train_end + 1, int(observations * (1 - self._test_fraction)))
         if validation_end >= observations:
             raise ValueError("not enough observations for train, validation, and test periods")
