@@ -4,20 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 
 const candidates = [
   {
-    name: "momentum_volume_divergence",
-    expression: "div(returns(close, 5), relative_volume(volume, 20))",
-    holdoutReturn: 8.35,
-    benchmark: 7.7,
-    sharpe: 1.29,
-    drawdown: -6.66,
-  },
-  {
-    name: "small_cap_liquidity_exhaustion",
-    expression: "mul(returns(close, 5), relative_volume(volume, 20))",
-    holdoutReturn: 7.18,
-    benchmark: 7.7,
-    sharpe: 1.11,
-    drawdown: -8.36,
+    name: "small_cap_trend_divergence",
+    expression: "sub(returns(close, 60), returns(close, 20))",
+    holdoutReturn: 9.45,
+    benchmark: 6.98,
+    sharpe: 1.36,
+    drawdown: -6.05,
   },
 ];
 
@@ -25,15 +17,21 @@ const stages = ["Observe", "Hypothesize", "Factor", "Backtest", "Plan", "Risk"];
 
 const baseChecks = [
   ["Paper account active", "ACTIVE"],
+  ["Paper-only trading", "Live trading disabled"],
   ["Options permission", "Level 3"],
   ["Contract quantity", "1 / 1"],
-  ["Portfolio option exposure", "$443 / $2,000"],
+  ["Market open", "Yes"],
+  ["No duplicate exposure", "None"],
+  ["Single-trade maximum loss", "$414 / $500"],
+  ["Portfolio option exposure", "$414 / $2,000"],
+  ["Options buying power", "$414 / $100,000"],
   ["Daily loss kill switch", "0.00% / 2.00%"],
-  ["Bid-ask spread", "4.1% / 20.0%"],
+  ["Quote freshness", "0s / 900s"],
+  ["Bid-ask spread", "1.2% / 20.0%"],
   ["Holdout sample", "87 / 60"],
-  ["Holdout Sharpe", "1.29 / 0.50"],
-  ["Holdout excess return", "+0.65% / > 0%"],
-  ["Holdout drawdown", "-6.66% / -15.0%"],
+  ["Holdout Sharpe", "1.36 / 0.50"],
+  ["Holdout excess return", "+2.47% / > 0%"],
+  ["Holdout drawdown", "-6.05% / -15.0%"],
 ] as const;
 
 function formatPct(value: number) {
@@ -48,8 +46,8 @@ export default function Home() {
   const [view, setView] = useState<"overview" | "audit">("overview");
   const candidate = candidates[candidateIndex];
   const allowedLoss = riskPct * 1000;
-  const premiumPasses = allowedLoss >= 443;
-  const passedChecks = premiumPasses ? 15 : 14;
+  const premiumPasses = allowedLoss >= 414;
+  const passedChecks = premiumPasses ? 16 : 15;
 
   useEffect(() => {
     if (!running) return;
@@ -90,7 +88,7 @@ export default function Home() {
       <section className="hero" id="top">
         <div className="hero-backdrop" />
         <div className="hero-copy">
-          <div className="eyebrow"><span>LIVE PIPELINE SAMPLE</span><b>SEPT 2, 2026</b></div>
+          <div className="eyebrow"><span>RECORDED PAPER RUN</span><b>SEPT 3, 2026</b></div>
           <h1>Research a signal.<br /><em>Trade only if it earns trust.</em></h1>
           <p>
             Gemma turns market evidence into testable factors. Deterministic code backtests,
@@ -105,18 +103,18 @@ export default function Home() {
         </div>
         <div className="run-card">
           <div className="run-card-head">
-            <div><span className="muted">CURRENT RUN</span><strong>AB-20260902-01</strong></div>
-            <span className="status held"><i /> HELD</span>
+            <div><span className="muted">EXECUTED RUN</span><strong>AB-20260903-01</strong></div>
+            <span className="status ready"><i /> FILLED</span>
           </div>
           <div className="run-stat-grid">
-            <div><span>Selected factor</span><b>1 of 2</b></div>
+            <div><span>Generated factors</span><b>15</b></div>
             <div><span>Risk checks</span><b>{passedChecks} / 16</b></div>
-            <div><span>Max loss</span><b>$443</b></div>
-            <div><span>Order</span><b>Not sent</b></div>
+            <div><span>Max loss</span><b>$414</b></div>
+            <div><span>Order</span><b>Filled</b></div>
           </div>
           <div className="hold-reason">
             <span>01</span>
-            <div><b>Quote freshness blocked execution</b><p>The market was closed. AlphaBeater kept the plan but refused to trade a 7h 44m old quote.</p></div>
+            <div><b>Paper position is being monitored</b><p>Best observed unrealized P&amp;L: +$4. Current: -$25 as of Sep 4, 11:00 AM ET. Experimental forward-paper run.</p></div>
           </div>
         </div>
       </section>
@@ -166,16 +164,16 @@ export default function Home() {
               </article>
 
               <article className="panel trade-panel">
-                <div className="panel-title"><div><span className="kicker">OPTIONS PLAN</span><h3>IWM long call</h3></div><span className="tag call">CALL</span></div>
-                <div className="contract">IWM <b>25 SEP 2026</b> 295 C</div>
-                <div className="trade-price"><span>$4.43</span><small>limit midpoint<br />$443 max loss</small></div>
+                <div className="panel-title"><div><span className="kicker">EXECUTED PAPER ORDER</span><h3>IWM long call</h3></div><span className="tag call">CALL</span></div>
+                <div className="contract">IWM <b>25 SEP 2026</b> 296 C</div>
+                <div className="trade-price"><span>$4.14</span><small>filled limit<br />$414 max loss</small></div>
                 <dl className="trade-details">
-                  <div><dt>Signal z-score</dt><dd>+0.85</dd></div>
-                  <div><dt>Delta</dt><dd>+0.4972</dd></div>
-                  <div><dt>Bid / ask</dt><dd>$4.34 / $4.52</dd></div>
-                  <div><dt>Spread</dt><dd>4.1%</dd></div>
+                  <div><dt>Signal strength</dt><dd>0.65</dd></div>
+                  <div><dt>Delta</dt><dd>+0.4858</dd></div>
+                  <div><dt>Bid / ask</dt><dd>$4.11 / $4.16</dd></div>
+                  <div><dt>Spread</dt><dd>1.2%</dd></div>
                   <div><dt>Quantity</dt><dd>1 contract</dd></div>
-                  <div><dt>Intent</dt><dd>Buy to open</dd></div>
+                  <div><dt>Paper P&amp;L</dt><dd>-$25 current</dd></div>
                 </dl>
                 <div className="order-route"><span>MCP</span><div><b>Official Alpaca MCP</b><small>place_option_order · paper=true</small></div><i>→</i></div>
               </article>
@@ -190,18 +188,17 @@ export default function Home() {
                 <div className="range-ends"><span>0.20%</span><span>1.00%</span></div>
                 <div className={`gate-result ${premiumPasses ? "pass" : "fail"}`}>
                   <span>{premiumPasses ? "✓" : "×"}</span>
-                  <div><b>{premiumPasses ? "$443 is inside the limit" : "$443 exceeds the limit"}</b><small>{premiumPasses ? `$${(allowedLoss - 443).toFixed(0)} risk capacity remains` : `Reduce premium by $${(443 - allowedLoss).toFixed(0)}`}</small></div>
+                  <div><b>{premiumPasses ? "$414 is inside the limit" : "$414 exceeds the limit"}</b><small>{premiumPasses ? `$${(allowedLoss - 414).toFixed(0)} risk capacity remains` : `Reduce premium by $${(414 - allowedLoss).toFixed(0)}`}</small></div>
                 </div>
               </article>
               <article className="panel checks-panel">
-                <div className="checks-head"><div><span className="kicker">HARD CHECKS</span><h3>{passedChecks} passed · 1 held</h3></div><span className="ring">{passedChecks}<small>/16</small></span></div>
+                <div className="checks-head"><div><span className="kicker">EXECUTION CHECKS</span><h3>{passedChecks} passed · {16 - passedChecks} blocked</h3></div><span className="ring">{passedChecks}<small>/16</small></span></div>
                 <div className="checks-grid">
                   {baseChecks.map(([label, value], index) => {
-                    const riskCheck = index === 2;
+                    const riskCheck = index === 6;
                     const pass = !riskCheck || premiumPasses;
-                    return <div className={pass ? "check" : "check failed"} key={label}><i>{pass ? "✓" : "×"}</i><span><b>{label}</b><small>{riskCheck ? `$443 / $${allowedLoss.toFixed(0)}` : value}</small></span></div>;
+                    return <div className={pass ? "check" : "check failed"} key={label}><i>{pass ? "✓" : "×"}</i><span><b>{label}</b><small>{riskCheck ? `$414 / $${allowedLoss.toFixed(0)}` : value}</small></span></div>;
                   })}
-                  <div className="check held-check"><i>!</i><span><b>Quote freshness</b><small>27,844s / 900s</small></span></div>
                 </div>
               </article>
             </div>
@@ -232,13 +229,13 @@ export default function Home() {
 
 function AuditLog() {
   const rows = [
-    ["19:44:02", "OBSERVE", "Fetched 290 daily bars for SPY, QQQ, and IWM from Alpaca IEX."],
-    ["19:44:07", "IDEA", "Gemma proposed small-cap liquidity exhaustion from the point-in-time evidence."],
-    ["19:44:11", "FACTOR", "Validated 2 generated expressions against the safe DSL. No eval used."],
-    ["19:44:13", "BACKTEST", "Selected momentum_volume_divergence by holdout Sharpe, then excess return."],
-    ["19:44:16", "OPTIONS", "Selected IWM260925C00295000 from the indicative chain at a $4.43 midpoint."],
-    ["19:44:17", "RISK", "Rejected execution because the quote was older than 900 seconds."],
-    ["19:44:18", "MONITOR", "Paper account checked: 0 open orders, 0 positions, 0 exit events."],
+    ["11:11:53", "OBSERVE", "Fetched 290 daily bars for SPY, QQQ, and IWM from Alpaca IEX."],
+    ["11:11:54", "IDEA", "Gemma generated three falsifiable market hypotheses."],
+    ["11:11:55", "FACTOR", "Validated 15 generated expressions against the safe DSL. No eval used."],
+    ["11:11:56", "BACKTEST", "Selected small_cap_trend_divergence for a controlled forward-paper experiment."],
+    ["11:15:13", "OPTIONS", "Selected IWM260925C00296000 at a $4.14 limit and $414 maximum loss."],
+    ["11:15:32", "RISK", "All 16 execution checks passed under the experimental forward-paper policy."],
+    ["11:17:04", "MONITOR", "Order filled. Best recorded unrealized paper P&L reached +$4."],
   ];
   return (
     <article className="panel audit-panel">
