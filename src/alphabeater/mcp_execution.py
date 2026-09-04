@@ -6,7 +6,7 @@ from fastmcp import Client
 
 from alphabeater.config import Settings
 from alphabeater.execution import PaperOrderReceipt
-from alphabeater.mcp_check import alpaca_mcp_transport
+from alphabeater.mcp_check import MCP_INIT_TIMEOUT_SECONDS, alpaca_mcp_transport
 from alphabeater.options_strategy import OptionTradePlan
 from alphabeater.risk import RiskDecision
 
@@ -35,7 +35,9 @@ class MCPPaperOrderExecutor:
             raise ValueError("paper execution requires the explicit --execute flag")
 
         async with Client(
-            alpaca_mcp_transport(self._settings, toolsets="trading"), timeout=30
+            alpaca_mcp_transport(self._settings, toolsets="trading"),
+            timeout=30,
+            init_timeout=MCP_INIT_TIMEOUT_SECONDS,
         ) as client:
             result = await client.call_tool(
                 "place_option_order",

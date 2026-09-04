@@ -12,6 +12,11 @@ from fastmcp.client.transports import StdioTransport
 
 from alphabeater.config import Settings
 
+#: `uvx` spawns the MCP server in a fresh environment, which on Windows regularly takes longer
+#: than FastMCP's default initialization budget. `timeout` only covers requests once the session
+#: exists, so without this the handshake fails before any tool can be called.
+MCP_INIT_TIMEOUT_SECONDS = 120
+
 
 def alpaca_mcp_transport(settings: Settings, *, toolsets: str) -> StdioTransport:
     api_key, secret_key = settings.require_alpaca_credentials()
@@ -39,7 +44,9 @@ def alpaca_mcp_transport(settings: Settings, *, toolsets: str) -> StdioTransport
 async def inspect_mcp(*, describe: bool = False) -> dict[str, Any]:
     settings = Settings()
     async with Client(
-        alpaca_mcp_transport(settings, toolsets="account,trading"), timeout=30
+        alpaca_mcp_transport(settings, toolsets="account,trading"),
+        timeout=30,
+        init_timeout=MCP_INIT_TIMEOUT_SECONDS,
     ) as client:
         tools = await client.list_tools()
         result: dict[str, Any] = {
