@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     gemini_api_key: SecretStr | None = None
     gemma_model: str = "gemma-4-31b-it"
 
+    featherless_api_key: SecretStr | None = None
+    featherless_model: str = "openai/gpt-oss-120b"
+    featherless_backup_model: str = "deepseek-ai/DeepSeek-V3.1"
+
     alpaca_api_key: SecretStr | None = None
     alpaca_secret_key: SecretStr | None = None
     alpaca_paper: bool = Field(default=True)
@@ -22,6 +26,12 @@ class Settings(BaseSettings):
         if self.gemini_api_key is None:
             raise ValueError("GEMINI_API_KEY is required to call Gemma")
         return self.gemini_api_key.get_secret_value()
+
+    def featherless_key(self) -> str | None:
+        """Return the Featherless key when configured; the fallback is optional."""
+        if self.featherless_api_key is None:
+            return None
+        return self.featherless_api_key.get_secret_value()
 
     def assert_paper_trading(self) -> None:
         if not self.alpaca_paper:

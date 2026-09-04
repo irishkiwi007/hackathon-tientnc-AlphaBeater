@@ -8,6 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from alpaca.common.exceptions import APIError
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import QueryOrderStatus
@@ -18,13 +19,19 @@ from alphabeater.alpaca import AlpacaMarketData, AlpacaPaperAccount
 from alphabeater.backtest import BacktestMetrics, DevelopmentBacktestResult, FactorBacktester
 from alphabeater.config import Settings
 from alphabeater.factor_calculator import FactorCalculator
-from alphabeater.llm import GemmaLLM
+from alphabeater.llm import FallbackLLM, FeatherlessLLM, GemmaLLM
 from alphabeater.mcp_execution import MCPPaperOrderExecutor
-from alphabeater.models import FactorCandidate, MarketHypothesis, MarketObservation
+from alphabeater.models import (
+    Direction,
+    FactorCandidate,
+    MarketHypothesis,
+    MarketObservation,
+)
 from alphabeater.monitor import PaperPositionMonitor
 from alphabeater.options_strategy import LongPremiumStrategy
 from alphabeater.research_demo import _evidence, _to_frame
 from alphabeater.risk import OptionsRiskGate, RiskContext
+from alphabeater.universe import LOOKBACK_DAYS, RESEARCH_UNIVERSE
 
 RESEARCH_THEMES = (
     "medium-term trend persistence and price strength",
@@ -93,10 +100,75 @@ def _period_passes(metrics: BacktestMetrics, *, minimum_observations: int) -> bo
     )
 
 
+def _build_llm(settings: Settings) -> FallbackLLM:
+    """Featherless for research, with Gemma as the independent fallback.
+
+    Measured on this project's own task (real bars, real agents, real DSL validation):
+    Featherless/DeepSeek-V3.1 produced 5 of 5 executable expressions in 45s, while the hosted
+    Gemma endpoint returned intermittent 503s on two of three runs. Featherless therefore leads
+    and Gemma covers it; a failed research call costs a market window.
+
+    When no Featherless key is configured, Gemma leads alone and behaviour is unchanged.
+    """
+    featherless_key = settings.featherless_key()
+    gemma = GemmaLLM(api_key=settings.require_gemini_key(), model=settings.gemma_model)
+    if not featherless_key:
+        return FallbackLLM(primary=gemma, secondary=None)
+
+    # FallbackLLM satisfies StructuredLLM, so nesting one inside another chains three deep:
+    # a second Featherless model covers a bad reply from the first, and Gemma covers a
+    # Featherless outage. Both Featherless models scored 5/5 on the real task; Gemma is last
+    # because it returned 503 on two of three measured runs.
+    return FallbackLLM(
+        primary=FeatherlessLLM(api_key=featherless_key, model=settings.featherless_model),
+        secondary=FallbackLLM(
+            primary=FeatherlessLLM(
+                api_key=featherless_key, model=settings.featherless_backup_model
+            ),
+            secondary=gemma,
+        ),
+    )
+
+
+def _resolve_direction(
+    backtester: FactorBacktester,
+    frame: pd.DataFrame,
+    candidate: FactorCandidate,
+) -> tuple[FactorCandidate, DevelopmentBacktestResult]:
+    """Test the formula both ways round and keep the better one.
+
+    The model guesses whether a factor should be read as bullish or bearish, and it guesses badly:
+    measured candidates were frequently and consistently *wrong*, which is the same information as
+    being right, inverted. Deciding the sign is model selection, so it is settled using training and
+    validation only. The locked test is not consulted here and stays untouched.
+
+    Returns the candidate carrying the chosen direction, so every later stage - the holdout run,
+    the signal, and the options plan - reads the same sign.
+    """
+    scored: list[tuple[Direction, DevelopmentBacktestResult]] = []
+    for direction in (Direction.POSITIVE, Direction.NEGATIVE):
+        scored.append(
+            (direction, backtester.run_development(frame, candidate.expression, direction))
+        )
+
+    def preference(item: tuple[Direction, DevelopmentBacktestResult]) -> tuple[bool, float, float]:
+        _, result = item
+        return (
+            _development_passes(result),
+            min(result.training.sharpe_ratio, result.validation.sharpe_ratio),
+            min(result.training.excess_return, result.validation.excess_return),
+        )
+
+    direction, result = max(scored, key=preference)
+    if direction == candidate.expected_direction:
+        return candidate, result
+    return candidate.model_copy(update={"expected_direction": direction}), result
+
+
 def _development_passes(result: DevelopmentBacktestResult) -> bool:
-    return _period_passes(
-        result.training, minimum_observations=100
-    ) and _period_passes(result.validation, minimum_observations=40)
+    return _period_passes(result.training, minimum_observations=100) and _period_passes(
+        result.validation, minimum_observations=40
+    )
 
 
 def _best_experimental_candidate(
@@ -131,12 +203,12 @@ def run_workflow(
     api_key, secret_key = settings.require_alpaca_credentials()
     market_data = AlpacaMarketData.from_settings(settings)
     bars = market_data.get_daily_bars(
-        ["SPY", "QQQ", "IWM"], start=now - timedelta(days=420), end=now
+        RESEARCH_UNIVERSE, start=now - timedelta(days=LOOKBACK_DAYS), end=now
     )
     frame = _to_frame(bars)
     observation = MarketObservation(
         as_of=max(bar.timestamp for bar in bars).isoformat(),
-        universe=["SPY", "QQQ", "IWM"],
+        universe=RESEARCH_UNIVERSE,
         evidence=_evidence(frame),
     )
     calculator = FactorCalculator()
@@ -161,8 +233,12 @@ def run_workflow(
                 )
             )
         research_batches = len(hypotheses)
+        # Reused research was generated by whichever model the saved record names.
+        research_model = str(
+            saved.get("research_protocol", {}).get("generator_model") or "reused research"
+        )
     else:
-        llm = GemmaLLM(api_key=settings.require_gemini_key(), model=settings.gemma_model)
+        llm = _build_llm(settings)
         for batch in range(1, research_batches + 1):
             theme = RESEARCH_THEMES[batch - 1]
             hypothesis = IdeaAgent(llm).propose(
@@ -177,16 +253,11 @@ def run_workflow(
                 hypothesis,
                 execution_check=lambda expression: calculator.calculate(frame, expression),
             )
-            evaluated.extend(
-                (
-                    batch,
-                    factor,
-                    backtester.run_development(
-                        frame, factor.expression, factor.expected_direction
-                    ),
-                )
-                for factor in factors.candidates
-            )
+            for factor in factors.candidates:
+                resolved, development = _resolve_direction(backtester, frame, factor)
+                evaluated.append((batch, resolved, development))
+        # Record the model that actually answered, not the one we hoped would.
+        research_model = llm.last_model or settings.gemma_model
     candidate_records = [
         {
             **item_candidate.model_dump(mode="json"),
@@ -206,14 +277,14 @@ def run_workflow(
             "status": "abstained_before_locked_test",
             "reason": "no candidate passed both training and validation gates",
             "research_protocol": {
-                "generator_model": settings.gemma_model,
+                "generator_model": research_model,
                 "trained_predictive_model": None,
                 "candidate_count": len(evaluated),
                 "research_batches": research_batches,
                 "research_source": (
                     str(research_input)
                     if research_input is not None
-                    else "new Gemma generation"
+                    else f"new generation by {research_model}"
                 ),
                 "selection_data": "training eligibility and validation ranking",
                 "locked_test_evaluated": False,
@@ -308,12 +379,14 @@ def run_workflow(
         "execution_requested": execute,
         "mcp_execution": True,
         "research_protocol": {
-            "generator_model": settings.gemma_model,
+            "generator_model": research_model,
             "trained_predictive_model": None,
             "candidate_count": len(evaluated),
             "research_batches": research_batches,
             "research_source": (
-                str(research_input) if research_input is not None else "new Gemma generation"
+                str(research_input)
+                if research_input is not None
+                else f"new generation by {research_model}"
             ),
             "selection_data": "validation only",
             "development_gate": {

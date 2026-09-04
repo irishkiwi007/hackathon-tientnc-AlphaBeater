@@ -6,15 +6,12 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from alphabeater.llm._json import extract_json
 from alphabeater.llm.base import ResponseT
 
 
 def _extract_json(text: str) -> Any:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        lines = cleaned.splitlines()
-        cleaned = "\n".join(lines[1:-1]).strip()
-    return json.loads(cleaned)
+    return extract_json(text)
 
 
 class GemmaLLM:
