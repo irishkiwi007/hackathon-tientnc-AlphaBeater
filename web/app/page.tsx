@@ -114,7 +114,7 @@ export default function Home() {
           </div>
           <div className="hold-reason">
             <span>01</span>
-            <div><b>Paper position is being monitored</b><p>Best observed unrealized P&amp;L: +$4. Current: -$25 as of Sep 4, 11:00 AM ET. Experimental forward-paper run.</p></div>
+            <div><b>Paper position is being monitored</b><p>Best observed unrealized paper P&amp;L: +$4.94 at a recorded point in time. Experimental forward-paper run; P&amp;L is volatile.</p></div>
           </div>
         </div>
       </section>
@@ -173,7 +173,7 @@ export default function Home() {
                   <div><dt>Bid / ask</dt><dd>$4.11 / $4.16</dd></div>
                   <div><dt>Spread</dt><dd>1.2%</dd></div>
                   <div><dt>Quantity</dt><dd>1 contract</dd></div>
-                  <div><dt>Paper P&amp;L</dt><dd>-$25 current</dd></div>
+                  <div><dt>Best unrealized gain</dt><dd>+$4.94 observed</dd></div>
                 </dl>
                 <div className="order-route"><span>MCP</span><div><b>Official Alpaca MCP</b><small>place_option_order · paper=true</small></div><i>→</i></div>
               </article>
@@ -235,7 +235,7 @@ function AuditLog() {
     ["11:11:56", "BACKTEST", "Selected small_cap_trend_divergence for a controlled forward-paper experiment."],
     ["11:15:13", "OPTIONS", "Selected IWM260925C00296000 at a $4.14 limit and $414 maximum loss."],
     ["11:15:32", "RISK", "All 16 execution checks passed under the experimental forward-paper policy."],
-    ["11:17:04", "MONITOR", "Order filled. Best recorded unrealized paper P&L reached +$4."],
+    ["11:17:04", "MONITOR", "Order filled. Best recorded unrealized paper P&L reached +$4.94 at a point in time."],
   ];
   return (
     <article className="panel audit-panel">
