@@ -1,14 +1,106 @@
 # AlphaBeater
 
-AlphaBeater is an autonomous, risk-gated options agent built for the Alpaca AI Trading Agents Hackathon. It uses Gemma to form a market hypothesis and generate factor expressions, tests those expressions on Alpaca data, builds a defined-risk options plan, and routes an approved paper order through Alpaca's official MCP server.
+**An options agent whose most important skill is refusing to trade.**
 
-The LLM does research. Regular Python code calculates factors, ranks contracts, and enforces every trading limit.
+Most trading bots bolt an LLM onto indicators from the 1970s. AlphaBeater does something rarer: an
+open-source model **invents new factor formulas**, deterministic Python grades them on data the
+model never sees, and the agent is allowed to answer *"no trade"* — and usually does.
+
+The model may propose. It may never execute. Every limit lives in Python the model cannot reach.
+
+![AlphaBeater dashboard](docs/images/01-hero.jpg)
+
+| | |
+| --- | --- |
+| **Universe** | 18 liquid, optionable US ETFs |
+| **Factor language** | 6 fields, 20 operators, parsed not `eval`'d |
+| **Evaluation** | chronological 50 / 20 / 30 split, locked test read once |
+| **Risk gates** | 16 deterministic checks, 12 blocking |
+| **Execution** | Alpaca official MCP server, paper only |
+| **Research models** | `gpt-oss-120b` -> `DeepSeek-V3.1` -> `Gemma`, automatic failover |
+| **Worst case per trade** | the premium paid - long options only, never naked |
+
+## Why this is hard, and what we did about it
+
+**An LLM will confidently invent a strategy that loses money.** So it never touches execution.
+It writes a formula in a restricted language; Python parses that formula with `ast`, walks it, and
+refuses anything outside the registered operator table. No `eval`, ever.
+
+**A backtest will lie to you if you let it.** Split the history in time: train on the first half,
+choose on the next 20%, and read the last 30% **once**, after choosing. Peek at the locked period
+and you are memorising the answer key.
+
+**Providers fail at the worst moment.** On 4 Sept 2026 the hosted Gemma endpoint returned `503` on
+two of three measured runs. Research now runs through three models in order, so one outage cannot
+cost a market window.
+
+## The factor language
+
+This is the trust boundary, so it is documented in full. An expression is a nested function call
+over these fields and operators - nothing else parses.
+
+**Fields:** `open` `high` `low` `close` `volume` `vwap`
+
+| Operator | Signature | Notes |
+| --- | --- | --- |
+| `add` `sub` `mul` `div` | `add(a, b)` | arithmetic |
+| `neg` | `neg(a)` | flip sign |
+| `abs` | `abs(a)` | size of a move, ignoring direction |
+| `sign` | `sign(a)` | -1, 0 or 1 |
+| `returns` | `returns(series, window)` | percentage change over the window |
+| `delay` | `delay(series, window)` | value N sessions ago |
+| `ts_mean` `ts_std` `ts_min` `ts_max` | `ts_mean(series, window)` | rolling statistics |
+| `ts_rank` | `ts_rank(series, window)` | where today sits in its own recent history |
+| `ts_corr` | `ts_corr(a, b, window)` | rolling correlation of two series |
+| `decay_linear` | `decay_linear(series, window)` | weighted average, recent days weigh more |
+| `relative_volume` | `relative_volume(volume, window)` | today's volume versus its own average |
+| `rank` | `rank(series)` | **cross-sectional** - no window |
+| `zscore` | `zscore(series)` | **cross-sectional** - no window |
+| `demean` | `demean(series)` | **cross-sectional** - this symbol minus the universe average |
+
+`rank`, `zscore` and `demean` compare symbols *against each other on the same day*. They are the
+reason breadth matters: with three symbols a cross-sectional rank has three possible values and
+carries almost no information. `demean` is how a hypothesis like *"industrials are strong relative
+to the market"* becomes an expression.
+
+A real formula the model wrote, using three operators at once:
+
+```
+mul(sign(returns(close,20)), ts_corr(returns(close,20), relative_volume(volume,20), 20))
+```
+
+## The universe
+
+`SPY QQQ IWM DIA MDY` · `EFA EEM` · `XLK XLF XLE XLV XLY XLI XLP SMH` · `GLD TLT HYG`
+
+Broad market and size, geography, sectors, and diversifiers that behave differently from equities.
+Every symbol is large, liquid and optionable. Defined in `src/alphabeater/universe.py` with the
+reasoning; both entry points import it so it cannot drift.
+
+## What one run looks like
+
+![Factor evaluation and the resulting options plan](docs/images/02-factor-and-plan.jpg)
+
+The model proposes five formulas, each is calculated and backtested, and the strongest current
+signal becomes a single defined-risk contract - 21 to 45 days out, 0.35 to 0.60 absolute delta,
+spread under 20%, premium inside the risk budget.
+
+## The 16 gates
+
+![Every risk check with its measured value and limit](docs/images/03-risk-checks.jpg)
+
+Every check publishes what it measured and the limit it was measured against. **Blocking** checks
+stop an order outright. Advisory checks are recorded but do not block in the explicitly labelled
+experimental-forward mode.
+
+The dashboard is not a mockup: it renders `docs/sample-run.json`, the sanitized record of a real
+run, regenerated by `alphabeater-publish`.
 
 ## Current workflow
 
-1. Read recent SPY, QQQ, and IWM bars from Alpaca's IEX feed and summarize 5/20/60-day returns, price location, volatility, and relative volume.
-2. Ask Gemma for a falsifiable hypothesis grounded in that snapshot.
-3. Run three precommitted research batches. Each asks Gemma for a distinct hypothesis and five different factor candidates in the project's small factor DSL.
+1. Read recent bars for the 18-symbol universe from Alpaca's IEX feed and summarize 5/20/60-day returns, price location, volatility, and relative volume.
+2. Ask the research model for a falsifiable hypothesis grounded in that snapshot.
+3. Run three precommitted research batches. Each asks the research model for a distinct hypothesis and five different factor candidates in the project's small factor DSL.
 4. Validate and calculate each expression without `eval`.
 5. Standardize each factor over the trailing 60 sessions, select the strongest absolute signal, and simulate its call/put direction with next-session underlying returns and 5 bps costs. Split observations chronologically into 50 percent training, 20 percent validation, and a locked 30 percent test period.
 6. Reject candidates unless both training and validation have positive excess return, at least 0.50 Sharpe, and acceptable drawdown. Rank survivors using validation data only. Then evaluate the winner once on the locked test period.
@@ -22,13 +114,15 @@ The strategy buys premium only. Its maximum loss is the premium paid. It does no
 
 ## Latest verified run
 
-On September 3, 2026, Gemma 4 31B generated 15 valid, executable factor candidates. Seven had positive raw training returns and five had positive raw validation returns, but none were positive and stable in both periods after applying the full gate. The agent recorded `abstained_before_locked_test`, did not inspect the locked test, and did not construct or submit an order.
+On September 4, 2026, `openai/gpt-oss-120b` generated five valid, executable factor candidates over the 18-symbol universe in 33 seconds. None passed both the training and validation gates, so the agent did not qualify any candidate for research-validated execution.
+
+A separate systematic sweep of 20 classical factor shapes through the same backtester found exactly one that cleared the gate: `neg(ts_rank(ts_std(close,20), 60))`, with training Sharpe 1.50 and validation Sharpe 1.57. On the locked test it returned +2.29% - positive, but behind the +12.43% benchmark. That formula is only expressible because `ts_rank` exists; it was impossible in the earlier 15-operator language.
 
 This is expected risk behavior, not a profitable result. The audit is stored locally in `artifacts/final-evaluation.json` and is excluded from Git because generated artifacts may contain account or order details.
 
 ## Research model and evaluation
 
-Gemma `gemma-4-31b-it` generates independent hypotheses and five candidate DSL formulas per hypothesis. The five available precommitted themes are trend, mean reversion, volatility regime, price-volume confirmation, and breakout/range behavior. No predictive ML model is trained or fitted. Python calculates every factor and return deterministically.
+Research runs through `openai/gpt-oss-120b`, falling back to `deepseek-ai/DeepSeek-V3.1` and then `gemma-4-31b-it`. Each generates independent hypotheses and five candidate DSL formulas per hypothesis. The five available precommitted themes are trend, mean reversion, volatility regime, price-volume confirmation, and breakout/range behavior. No predictive ML model is trained or fitted. Python calculates every factor and return deterministically.
 
 The chronological split is 50/20/30. The first half checks initial consistency, the next 20 percent selects one candidate, and the last 30 percent is a locked test used only after selection. A failed locked test stops the run. Repeated runs against the same locked period must not be used to search for a passing result.
 
@@ -59,6 +153,9 @@ Add a Google AI Studio key and Alpaca paper keys to `.env`. Never commit that fi
 ```dotenv
 GEMINI_API_KEY=...
 GEMMA_MODEL=gemma-4-31b-it
+FEATHERLESS_API_KEY=...
+FEATHERLESS_MODEL=openai/gpt-oss-120b
+FEATHERLESS_BACKUP_MODEL=deepseek-ai/DeepSeek-V3.1
 ALPACA_API_KEY=...
 ALPACA_SECRET_KEY=...
 ALPACA_PAPER=true
@@ -67,7 +164,7 @@ ALPACA_PAPER=true
 ## Verify each integration
 
 ```bash
-# Paper account and Gemma configuration
+# Paper account and research model configuration
 alphabeater-check
 
 # Alpaca IEX bars and indicative options chain
@@ -76,7 +173,7 @@ alphabeater-data-check
 # Official Alpaca MCP server and paper account
 alphabeater-mcp-check
 
-# Gemma hypothesis, factor calculation, and backtests
+# Hypothesis, factor calculation, and backtests
 alphabeater-research-demo
 ```
 
@@ -162,6 +259,21 @@ npm install
 npm run dev
 ```
 
+## Audit trail
+
+Every run writes a complete decision record to `artifacts/latest-run.json`: the hypothesis, all
+factor candidates, each backtest, the selected contract, and the result of every risk check.
+That directory is gitignored because a completed run carries broker order identifiers.
+
+A sanitized copy is committed at [`docs/sample-run.json`](docs/sample-run.json) so the record can
+be inspected without credentials. Regenerate it after any run with:
+
+```bash
+alphabeater-publish
+```
+
+Identifiers are replaced with `[redacted]`; every metric and risk check is preserved.
+
 ## Tests
 
 ```bash
@@ -178,7 +290,9 @@ npm test
 
 ```text
 src/alphabeater/
-  agents/               Gemma idea and factor agents
+  agents/               idea and factor agents
+  llm/                  provider adapters and the failover chain
+  universe.py           the 18-symbol research universe
   alpaca/               paper account and market data adapters
   agent_run.py          complete workflow
   backtest.py           factor evaluation

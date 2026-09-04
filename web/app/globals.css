@@ -90,8 +90,10 @@ h2 { font-size: clamp(29px, 3vw, 43px); letter-spacing: -.035em; margin: 8px 0 0
 h3 { font-size: 21px; letter-spacing: -.02em; margin: 6px 0 0; }
 .tag { padding: 6px 8px; color: #64737b; background: #f0f3f3; border-radius: 5px; font: 700 9px var(--font-geist-mono); letter-spacing: .06em; text-transform: uppercase; }
 .tag.call { color: #075e49; background: #dcf5ea; }
-.candidate-tabs { margin: 24px -26px 18px; padding: 0 26px; display: flex; border-bottom: 1px solid var(--line); }
-.candidate-tabs button { max-width: 50%; padding: 0 18px 13px 0; margin-right: 20px; border: 0; border-bottom: 2px solid transparent; color: #85949b; background: transparent; text-align: left; text-transform: capitalize; font-size: 11px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The layout was built for 2 candidates; a research batch now returns 5, so the row wraps
+   instead of squeezing every factor name into an unreadable ellipsis. */
+.candidate-tabs { margin: 24px -26px 18px; padding: 0 26px; display: flex; flex-wrap: wrap; column-gap: 4px; border-bottom: 1px solid var(--line); }
+.candidate-tabs button { max-width: 100%; padding: 0 12px 13px 0; margin-right: 12px; border: 0; border-bottom: 2px solid transparent; color: #85949b; background: transparent; text-align: left; text-transform: capitalize; font-size: 11px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .candidate-tabs button span { font: 700 9px var(--font-geist-mono); margin-right: 7px; }
 .candidate-tabs button.active { color: var(--ink); border-color: var(--ink); font-weight: 750; }
 code { display: block; padding: 13px 14px; color: #1a667b; background: #f2f6f7; border: 1px solid #e2e9eb; border-radius: 6px; font-size: 11px; overflow-x: auto; }
@@ -108,6 +110,9 @@ code { display: block; padding: 13px 14px; color: #1a667b; background: #f2f6f7; 
 .bar-line > div { height: 7px; background: #e8ecec; border-radius: 5px; overflow: hidden; }
 .bar-line i { display: block; height: 100%; background: var(--lime); border-radius: 5px; }
 .bar-line.benchmark i { background: #6d8290; }
+/* A negative return must never render as a green bar. */
+.bar-line.loss i { background: var(--red); }
+.bar-line b.loss { color: var(--red); }
 .bar-line b { text-align: right; font-family: var(--font-geist-mono); }
 .fineprint { margin: 15px 0 0; color: #89979d; font-size: 10px; line-height: 1.5; }
 .contract { margin: 28px 0 8px; font: 750 14px var(--font-geist-mono); letter-spacing: .02em; }
@@ -118,7 +123,8 @@ code { display: block; padding: 13px 14px; color: #1a667b; background: #f2f6f7; 
 .trade-details { margin: 18px 0; display: grid; grid-template-columns: 1fr 1fr; }
 .trade-details div { padding: 9px 0; }
 .trade-details dt { color: #819097; font-size: 9px; margin-bottom: 4px; }
-.trade-details dd { margin: 0; font: 650 11px var(--font-geist-mono); }
+.trade-details dd { margin: 0; font: 650 11px var(--font-geist-mono); overflow-wrap: anywhere; }
+.trade-details .wide { grid-column: 1 / -1; }
 .order-route { display: flex; align-items: center; gap: 11px; padding: 12px; background: #071b2b; color: white; border-radius: 7px; }
 .order-route > span { padding: 7px; background: var(--lime); color: var(--ink); border-radius: 5px; font: 800 9px var(--font-geist-mono); }
 .order-route div { flex: 1; }

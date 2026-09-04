@@ -1,0 +1,576 @@
+{
+  "run_at": "2026-09-04T13:13:38.236193+00:00",
+  "mode": "paper",
+  "execution_policy": "experimental_forward_paper",
+  "research_qualified": false,
+  "execution_requested": false,
+  "mcp_execution": true,
+  "research_protocol": {
+    "generator_model": "openai/gpt-oss-120b",
+    "trained_predictive_model": null,
+    "candidate_count": 5,
+    "research_batches": 1,
+    "research_source": "new generation by openai/gpt-oss-120b",
+    "selection_data": "validation only",
+    "development_gate": {
+      "applies_to": "both training and validation",
+      "minimum_training_observations": 100,
+      "minimum_validation_observations": 40,
+      "minimum_sharpe": 0.5,
+      "minimum_excess_return": 0,
+      "maximum_drawdown": -0.15
+    },
+    "final_evaluation": "one locked chronological holdout for the selected candidate",
+    "transaction_cost_bps": 5
+  },
+  "observation": {
+    "as_of": "2026-09-03T04:00:00+00:00",
+    "universe": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "DIA",
+      "MDY",
+      "EFA",
+      "EEM",
+      "XLK",
+      "XLF",
+      "XLE",
+      "XLV",
+      "XLY",
+      "XLI",
+      "XLP",
+      "SMH",
+      "GLD",
+      "TLT",
+      "HYG"
+    ],
+    "evidence": [
+      "DIA: returns 5d 0.31%, 20d -0.27%, 60d 5.38%; close vs 20d mean 0.45%; 20d annualized volatility 8.81%; relative volume 1.05x",
+      "EEM: returns 5d -0.19%, 20d 3.76%, 60d 2.51%; close vs 20d mean 1.31%; 20d annualized volatility 17.15%; relative volume 1.05x",
+      "EFA: returns 5d 0.20%, 20d 0.80%, 60d 5.16%; close vs 20d mean 0.24%; 20d annualized volatility 9.58%; relative volume 1.19x",
+      "GLD: returns 5d -2.93%, 20d 5.27%, 60d 4.97%; close vs 20d mean 0.18%; 20d annualized volatility 27.93%; relative volume 0.83x",
+      "HYG: returns 5d -0.85%, 20d -0.33%, 60d -0.55%; close vs 20d mean -0.53%; 20d annualized volatility 4.00%; relative volume 0.70x",
+      "IWM: returns 5d -1.54%, 20d -1.03%, 60d 3.59%; close vs 20d mean -1.32%; 20d annualized volatility 12.74%; relative volume 1.02x",
+      "MDY: returns 5d -1.16%, 20d -1.28%, 60d 1.30%; close vs 20d mean -1.38%; 20d annualized volatility 11.97%; relative volume 1.39x",
+      "QQQ: returns 5d -0.49%, 20d 0.42%, 60d 1.39%; close vs 20d mean -0.00%; 20d annualized volatility 13.49%; relative volume 1.04x",
+      "SMH: returns 5d -3.50%, 20d -3.33%, 60d -6.44%; close vs 20d mean -2.37%; 20d annualized volatility 30.56%; relative volume 0.98x",
+      "SPY: returns 5d 0.25%, 20d 0.58%, 60d 4.89%; close vs 20d mean 0.51%; 20d annualized volatility 8.29%; relative volume 1.19x",
+      "TLT: returns 5d -1.26%, 20d -0.54%, 60d -3.60%; close vs 20d mean -0.38%; 20d annualized volatility 10.70%; relative volume 0.66x",
+      "XLE: returns 5d 3.79%, 20d 11.08%, 60d 12.64%; close vs 20d mean 3.34%; 20d annualized volatility 22.01%; relative volume 1.10x",
+      "XLF: returns 5d 1.13%, 20d 1.26%, 60d 11.57%; close vs 20d mean 1.22%; 20d annualized volatility 11.66%; relative volume 1.15x",
+      "XLI: returns 5d -2.40%, 20d -5.55%, 60d -0.61%; close vs 20d mean -3.42%; 20d annualized volatility 12.11%; relative volume 1.03x",
+      "XLK: returns 5d -1.39%, 20d 0.37%, 60d 2.89%; close vs 20d mean 0.15%; 20d annualized volatility 21.32%; relative volume 1.07x",
+      "XLP: returns 5d 0.19%, 20d 0.14%, 60d 1.38%; close vs 20d mean -0.39%; 20d annualized volatility 14.34%; relative volume 1.39x",
+      "XLV: returns 5d 0.99%, 20d 5.40%, 60d 12.12%; close vs 20d mean 1.33%; 20d annualized volatility 18.63%; relative volume 0.60x",
+      "XLY: returns 5d 0.50%, 20d -1.42%, 60d 0.52%; close vs 20d mean -0.83%; 20d annualized volatility 16.72%; relative volume 1.01x"
+    ]
+  },
+  "hypothesis": {
+    "title": "Positive 20\u2011day mean excess with positive 20\u2011day return predicts continued medium\u2011term gains",
+    "mechanism": "If an ETF\u2019s 20\u2011day total return is positive and its closing price is at least 0.5% above its 20\u2011day moving\u2011average price (close vs 20\u2011day mean \u2265\u202f0.5%), the ETF is likely to sustain a positive return over the subsequent 20\u2011 to\u202f60\u2011day horizon. The hypothesis rests on medium\u2011term trend persistence: price strength relative to the recent average signals ongoing buying pressure that carries forward beyond the short\u2011term window.",
+    "expected_direction": "positive",
+    "horizon_days": 45,
+    "evidence_used": [
+      "XLE: returns 20d 11.08%, close vs 20d mean 3.34%, 60d 12.64%",
+      "XLF: returns 20d 1.26%, close vs 20d mean 1.22%, 60d 11.57%",
+      "XLV: returns 20d 5.40%, close vs 20d mean 1.33%, 60d 12.12%",
+      "SPY: returns 20d 0.58%, close vs 20d mean 0.51%, 60d 4.89%",
+      "GLD: returns 20d 5.27%, close vs 20d mean 0.18%, 60d 4.97%"
+    ],
+    "falsification_criteria": [
+      "An ETF meeting the >0.5% mean\u2011excess and positive 20\u2011day return condition posts a negative 20\u2011to\u201160\u2011day return.",
+      "The average 20\u2011to\u201160\u2011day return for all ETFs satisfying the condition is zero or negative.",
+      "Close vs 20\u2011day mean falls below 0.5% within the observation window while the 20\u2011day return remains positive.",
+      "A majority (>50%) of such ETFs experience a reversal (negative return) before the 60\u2011day mark."
+    ]
+  },
+  "hypotheses": [
+    {
+      "title": "Positive 20\u2011day mean excess with positive 20\u2011day return predicts continued medium\u2011term gains",
+      "mechanism": "If an ETF\u2019s 20\u2011day total return is positive and its closing price is at least 0.5% above its 20\u2011day moving\u2011average price (close vs 20\u2011day mean \u2265\u202f0.5%), the ETF is likely to sustain a positive return over the subsequent 20\u2011 to\u202f60\u2011day horizon. The hypothesis rests on medium\u2011term trend persistence: price strength relative to the recent average signals ongoing buying pressure that carries forward beyond the short\u2011term window.",
+      "expected_direction": "positive",
+      "horizon_days": 45,
+      "evidence_used": [
+        "XLE: returns 20d 11.08%, close vs 20d mean 3.34%, 60d 12.64%",
+        "XLF: returns 20d 1.26%, close vs 20d mean 1.22%, 60d 11.57%",
+        "XLV: returns 20d 5.40%, close vs 20d mean 1.33%, 60d 12.12%",
+        "SPY: returns 20d 0.58%, close vs 20d mean 0.51%, 60d 4.89%",
+        "GLD: returns 20d 5.27%, close vs 20d mean 0.18%, 60d 4.97%"
+      ],
+      "falsification_criteria": [
+        "An ETF meeting the >0.5% mean\u2011excess and positive 20\u2011day return condition posts a negative 20\u2011to\u201160\u2011day return.",
+        "The average 20\u2011to\u201160\u2011day return for all ETFs satisfying the condition is zero or negative.",
+        "Close vs 20\u2011day mean falls below 0.5% within the observation window while the 20\u2011day return remains positive.",
+        "A majority (>50%) of such ETFs experience a reversal (negative return) before the 60\u2011day mark."
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "name": "mean_excess_20d",
+      "expression": "mul(div(sub(close,ts_mean(close,20)),ts_mean(close,20)),returns(close,20))",
+      "rationale": "Combines the relative price excess over the 20\u2011day moving average with the 20\u2011day return. A higher value indicates that the ETF is both above its recent average by a meaningful margin and has generated positive short\u2011term momentum, supporting the hypothesis of continued medium\u2011term gains.",
+      "required_fields": [
+        "close"
+      ],
+      "horizon_days": 45,
+      "expected_direction": "negative",
+      "research_batch": 1,
+      "development_backtest": {
+        "training_start": "2024-08-06T04:00:00+00:00",
+        "training_end": "2025-08-20T04:00:00+00:00",
+        "validation_start": "2025-08-21T04:00:00+00:00",
+        "validation_end": "2026-01-20T05:00:00+00:00",
+        "training": {
+          "observations": 261,
+          "total_return": 0.13408028924555504,
+          "annualized_return": 0.12917052531970308,
+          "benchmark_return": 0.17434587876217367,
+          "excess_return": -0.04026558951661863,
+          "annualized_volatility": 0.19544980398525075,
+          "sharpe_ratio": 0.7186904109150306,
+          "max_drawdown": -0.1301332487044663,
+          "win_rate": 0.46360153256704983,
+          "average_daily_turnover": 0.9157088122605364,
+          "estimated_cost": 0.11950000000000001,
+          "rebalance_days": 120
+        },
+        "validation": {
+          "observations": 104,
+          "total_return": 0.004168675732930227,
+          "annualized_return": 0.010131000951501212,
+          "benchmark_return": 0.012639861398943353,
+          "excess_return": -0.008471185666013126,
+          "annualized_volatility": 0.18473546739095728,
+          "sharpe_ratio": 0.14529632921599964,
+          "max_drawdown": -0.10025009248043293,
+          "win_rate": 0.46153846153846156,
+          "average_daily_turnover": 1.1730769230769231,
+          "estimated_cost": 0.061000000000000006,
+          "rebalance_days": 61
+        }
+      },
+      "development_eligible": false,
+      "selected": false
+    },
+    {
+      "name": "rank_excess_20d",
+      "expression": "mul(rank(sub(close,ts_mean(close,20))),returns(close,20))",
+      "rationale": "Ranks the price excess relative to the 20\u2011day mean across the universe and multiplies by the 20\u2011day return. This captures cross\u2011sectional strength; ETFs that rank high on excess and have positive recent returns are expected to maintain positive performance over the next 45 days.",
+      "required_fields": [
+        "close"
+      ],
+      "horizon_days": 45,
+      "expected_direction": "negative",
+      "research_batch": 1,
+      "development_backtest": {
+        "training_start": "2024-08-06T04:00:00+00:00",
+        "training_end": "2025-08-20T04:00:00+00:00",
+        "validation_start": "2025-08-21T04:00:00+00:00",
+        "validation_end": "2026-01-20T05:00:00+00:00",
+        "training": {
+          "observations": 261,
+          "total_return": -0.02775314222855063,
+          "annualized_return": -0.026809083810717893,
+          "benchmark_return": 0.17434587876217367,
+          "excess_return": -0.2020990209907243,
+          "annualized_volatility": 0.19052544155890175,
+          "sharpe_ratio": -0.04803894460769727,
+          "max_drawdown": -0.14617165903624096,
+          "win_rate": 0.47509578544061304,
+          "average_daily_turnover": 0.89272030651341,
+          "estimated_cost": 0.1165,
+          "rebalance_days": 117
+        },
+        "validation": {
+          "observations": 104,
+          "total_return": 0.10744040292248114,
+          "annualized_return": 0.2805355830467098,
+          "benchmark_return": 0.012639861398943353,
+          "excess_return": 0.09480054152353778,
+          "annualized_volatility": 0.19364651263307994,
+          "sharpe_ratio": 1.3727064446747925,
+          "max_drawdown": -0.07768125385984903,
+          "win_rate": 0.5384615384615384,
+          "average_daily_turnover": 0.9230769230769231,
+          "estimated_cost": 0.048,
+          "rebalance_days": 48
+        }
+      },
+      "development_eligible": false,
+      "selected": false
+    },
+    {
+      "name": "excess_volume_weighted",
+      "expression": "mul(div(sub(close,ts_mean(close,20)),ts_mean(close,20)),relative_volume(volume,20))",
+      "rationale": "Measures the relative price excess over the 20\u2011day mean and weights it by recent volume activity. Elevated volume alongside price strength suggests stronger conviction, aligning with the hypothesis that such ETFs will continue to post positive returns.",
+      "required_fields": [
+        "close",
+        "volume"
+      ],
+      "horizon_days": 45,
+      "expected_direction": "negative",
+      "research_batch": 1,
+      "development_backtest": {
+        "training_start": "2024-08-06T04:00:00+00:00",
+        "training_end": "2025-08-20T04:00:00+00:00",
+        "validation_start": "2025-08-21T04:00:00+00:00",
+        "validation_end": "2026-01-20T05:00:00+00:00",
+        "training": {
+          "observations": 261,
+          "total_return": 0.06798401523645703,
+          "annualized_return": 0.06556454375723075,
+          "benchmark_return": 0.17434587876217367,
+          "excess_return": -0.10636186352571664,
+          "annualized_volatility": 0.1687009739636066,
+          "sharpe_ratio": 0.46095190765604,
+          "max_drawdown": -0.1458372491214539,
+          "win_rate": 0.4904214559386973,
+          "average_daily_turnover": 1.2911877394636015,
+          "estimated_cost": 0.1685,
+          "rebalance_days": 169
+        },
+        "validation": {
+          "observations": 104,
+          "total_return": 0.060489218831927705,
+          "annualized_return": 0.15293181733348704,
+          "benchmark_return": 0.012639861398943353,
+          "excess_return": 0.04784935743298435,
+          "annualized_volatility": 0.17245723224468865,
+          "sharpe_ratio": 0.9097951791260456,
+          "max_drawdown": -0.10068142100809252,
+          "win_rate": 0.5288461538461539,
+          "average_daily_turnover": 1.3653846153846154,
+          "estimated_cost": 0.07100000000000001,
+          "rebalance_days": 71
+        }
+      },
+      "development_eligible": false,
+      "selected": true
+    },
+    {
+      "name": "decay_excess_20d",
+      "expression": "mul(decay_linear(sub(close,ts_mean(close,20)),5),returns(close,20))",
+      "rationale": "Applies a decay\u2011linear weighting to the recent price excess, giving more importance to the latest days, and multiplies by the 20\u2011day return. This emphasizes recent momentum while accounting for sustained price above the mean, predicting continued gains.",
+      "required_fields": [
+        "close"
+      ],
+      "horizon_days": 45,
+      "expected_direction": "negative",
+      "research_batch": 1,
+      "development_backtest": {
+        "training_start": "2024-08-06T04:00:00+00:00",
+        "training_end": "2025-08-20T04:00:00+00:00",
+        "validation_start": "2025-08-21T04:00:00+00:00",
+        "validation_end": "2026-01-20T05:00:00+00:00",
+        "training": {
+          "observations": 261,
+          "total_return": 0.05076896240845841,
+          "annualized_return": 0.04897613382179422,
+          "benchmark_return": 0.17434587876217367,
+          "excess_return": -0.12357691635371526,
+          "annualized_volatility": 0.19185468222319532,
+          "sharpe_ratio": 0.34471148369396515,
+          "max_drawdown": -0.11307280892944971,
+          "win_rate": 0.4674329501915709,
+          "average_daily_turnover": 0.7164750957854407,
+          "estimated_cost": 0.0935,
+          "rebalance_days": 94
+        },
+        "validation": {
+          "observations": 104,
+          "total_return": 0.09542730523143761,
+          "annualized_return": 0.24713657511444875,
+          "benchmark_return": 0.012639861398943353,
+          "excess_return": 0.08278744383249426,
+          "annualized_volatility": 0.20372543455223685,
+          "sharpe_ratio": 1.1839521438715406,
+          "max_drawdown": -0.0790734855456221,
+          "win_rate": 0.4519230769230769,
+          "average_daily_turnover": 0.7692307692307693,
+          "estimated_cost": 0.04,
+          "rebalance_days": 40
+        }
+      },
+      "development_eligible": false,
+      "selected": false
+    },
+    {
+      "name": "zscore_excess_20d",
+      "expression": "mul(zscore(sub(close,ts_mean(close,20))),returns(close,20))",
+      "rationale": "Computes the cross\u2011sectional z\u2011score of the price excess over the 20\u2011day average and multiplies by the 20\u2011day return. A high z\u2011score indicates strong relative outperformance, and when combined with positive recent returns, it signals likely continuation over the medium term.",
+      "required_fields": [
+        "close"
+      ],
+      "horizon_days": 45,
+      "expected_direction": "positive",
+      "research_batch": 1,
+      "development_backtest": {
+        "training_start": "2024-08-06T04:00:00+00:00",
+        "training_end": "2025-08-20T04:00:00+00:00",
+        "validation_start": "2025-08-21T04:00:00+00:00",
+        "validation_end": "2026-01-20T05:00:00+00:00",
+        "training": {
+          "observations": 261,
+          "total_return": -0.08078775188082532,
+          "annualized_return": -0.07811377319738977,
+          "benchmark_return": 0.17434587876217367,
+          "excess_return": -0.255133630642999,
+          "annualized_volatility": 0.21515581020945507,
+          "sharpe_ratio": -0.2695945226931219,
+          "max_drawdown": -0.21025945660614265,
+          "win_rate": 0.4329501915708812,
+          "average_daily_turnover": 1.0153256704980842,
+          "estimated_cost": 0.1325,
+          "rebalance_days": 133
+        },
+        "validation": {
+          "observations": 104,
+          "total_return": 0.03247956356252102,
+          "annualized_return": 0.08052757746511507,
+          "benchmark_return": 0.012639861398943353,
+          "excess_return": 0.019839702163577666,
+          "annualized_volatility": 0.20312294097410513,
+          "sharpe_ratio": 0.48269759554124797,
+          "max_drawdown": -0.12667367748403324,
+          "win_rate": 0.5,
+          "average_daily_turnover": 1.0192307692307692,
+          "estimated_cost": 0.053000000000000005,
+          "rebalance_days": 53
+        }
+      },
+      "development_eligible": false,
+      "selected": false
+    }
+  ],
+  "selected_backtest": {
+    "training_start": "2024-08-06T04:00:00+00:00",
+    "training_end": "2025-08-20T04:00:00+00:00",
+    "validation_start": "2025-08-21T04:00:00+00:00",
+    "validation_end": "2026-01-20T05:00:00+00:00",
+    "training": {
+      "observations": 261,
+      "total_return": 0.06798401523645703,
+      "annualized_return": 0.06556454375723075,
+      "benchmark_return": 0.17434587876217367,
+      "excess_return": -0.10636186352571664,
+      "annualized_volatility": 0.1687009739636066,
+      "sharpe_ratio": 0.46095190765604,
+      "max_drawdown": -0.1458372491214539,
+      "win_rate": 0.4904214559386973,
+      "average_daily_turnover": 1.2911877394636015,
+      "estimated_cost": 0.1685,
+      "rebalance_days": 169
+    },
+    "validation": {
+      "observations": 104,
+      "total_return": 0.060489218831927705,
+      "annualized_return": 0.15293181733348704,
+      "benchmark_return": 0.012639861398943353,
+      "excess_return": 0.04784935743298435,
+      "annualized_volatility": 0.17245723224468865,
+      "sharpe_ratio": 0.9097951791260456,
+      "max_drawdown": -0.10068142100809252,
+      "win_rate": 0.5288461538461539,
+      "average_daily_turnover": 1.3653846153846154,
+      "estimated_cost": 0.07100000000000001,
+      "rebalance_days": 71
+    },
+    "holdout_start": "2026-01-21T05:00:00+00:00",
+    "holdout_end": "2026-09-03T04:00:00+00:00",
+    "full_period": {
+      "observations": 522,
+      "total_return": -0.08481502095118598,
+      "annualized_return": -0.041884024374619355,
+      "benchmark_return": 0.33701856608629566,
+      "excess_return": -0.42183358703748164,
+      "annualized_volatility": 0.19252448423113927,
+      "sharpe_ratio": -0.1266818612645519,
+      "max_drawdown": -0.24485371305171322,
+      "win_rate": 0.4885057471264368,
+      "average_daily_turnover": 1.289272030651341,
+      "estimated_cost": 0.3365000000000001,
+      "rebalance_days": 337
+    },
+    "holdout": {
+      "observations": 157,
+      "total_return": -0.19195067256263365,
+      "annualized_return": -0.2897210518869001,
+      "benchmark_return": 0.12431082233590485,
+      "excess_return": -0.3162614948985385,
+      "annualized_volatility": 0.2371235724516053,
+      "sharpe_ratio": -1.3254686202395456,
+      "max_drawdown": -0.24485371305171277,
+      "win_rate": 0.4585987261146497,
+      "average_daily_turnover": 1.2356687898089171,
+      "estimated_cost": 0.097,
+      "rebalance_days": 97
+    }
+  },
+  "trade_plan": {
+    "client_order_id": "[redacted]",
+    "underlying": "XLI",
+    "contract_symbol": "XLI261016C00176000",
+    "right": "call",
+    "expiration": "2026-10-16",
+    "strike": "176",
+    "quantity": 1,
+    "limit_price": "3.59",
+    "maximum_loss": "359.00",
+    "bid_price": "3.4",
+    "ask_price": "3.77",
+    "relative_spread": "0.1032078103207810320781032078",
+    "delta": "0.4907",
+    "quote_timestamp": "2026-09-03T19:59:59.405014Z",
+    "factor_name": "excess_volume_weighted",
+    "factor_expression": "mul(div(sub(close,ts_mean(close,20)),ts_mean(close,20)),relative_volume(volume,20))",
+    "signal": {
+      "underlying": "XLI",
+      "raw_value": -0.03522348548478355,
+      "z_score": -1.4799618011248787,
+      "predicted_score": 1.4799618011248787,
+      "right": "call",
+      "as_of": "2026-09-03T04:00:00Z"
+    },
+    "rationale": "Long call from a 1.48 directional factor z-score; 2026-10-16 expiry, 0.49 absolute delta, 10.3% spread.",
+    "created_at": "2026-09-04T13:13:38.236193Z"
+  },
+  "risk": {
+    "approved": false,
+    "max_allowed_trade_loss": "500.000",
+    "projected_options_exposure": "359.00",
+    "checks": [
+      {
+        "name": "paper account active",
+        "passed": true,
+        "actual": "AccountStatus.ACTIVE",
+        "limit": "ACTIVE",
+        "blocking": true
+      },
+      {
+        "name": "trading enabled",
+        "passed": true,
+        "actual": "False",
+        "limit": "false",
+        "blocking": true
+      },
+      {
+        "name": "options permission",
+        "passed": true,
+        "actual": "3",
+        "limit": ">= 2",
+        "blocking": true
+      },
+      {
+        "name": "market open",
+        "passed": true,
+        "actual": "False (preview)",
+        "limit": "true when executing",
+        "blocking": true
+      },
+      {
+        "name": "no duplicate exposure",
+        "passed": true,
+        "actual": "none",
+        "limit": "none",
+        "blocking": true
+      },
+      {
+        "name": "contract quantity",
+        "passed": true,
+        "actual": "1",
+        "limit": "<= 1",
+        "blocking": true
+      },
+      {
+        "name": "single-trade maximum loss",
+        "passed": true,
+        "actual": "$359.00",
+        "limit": "<= $500.00",
+        "blocking": true
+      },
+      {
+        "name": "portfolio options exposure",
+        "passed": true,
+        "actual": "$359.00",
+        "limit": "<= $2000.00",
+        "blocking": true
+      },
+      {
+        "name": "options buying power",
+        "passed": true,
+        "actual": "$359.00",
+        "limit": "<= $100000.00",
+        "blocking": true
+      },
+      {
+        "name": "daily loss kill switch",
+        "passed": true,
+        "actual": "0.00%",
+        "limit": "< 2.00%",
+        "blocking": true
+      },
+      {
+        "name": "quote freshness",
+        "passed": false,
+        "actual": "62019s",
+        "limit": "<= 900s",
+        "blocking": true
+      },
+      {
+        "name": "bid-ask spread",
+        "passed": true,
+        "actual": "10.3%",
+        "limit": "<= 20.0%",
+        "blocking": true
+      },
+      {
+        "name": "holdout sample",
+        "passed": true,
+        "actual": "157",
+        "limit": ">= 60",
+        "blocking": false
+      },
+      {
+        "name": "holdout Sharpe",
+        "passed": false,
+        "actual": "-1.33",
+        "limit": ">= 0.50",
+        "blocking": false
+      },
+      {
+        "name": "holdout excess return",
+        "passed": false,
+        "actual": "-31.63%",
+        "limit": "> 0.00%",
+        "blocking": false
+      },
+      {
+        "name": "holdout drawdown",
+        "passed": false,
+        "actual": "-24.49%",
+        "limit": ">= -15.00%",
+        "blocking": false
+      }
+    ],
+    "rejected_reasons": [
+      "quote freshness"
+    ],
+    "advisory_reasons": [
+      "holdout Sharpe",
+      "holdout excess return",
+      "holdout drawdown"
+    ],
+    "evaluated_at": "2026-09-04T13:13:38.236193Z"
+  },
+  "order": null,
+  "monitor": {
+    "checked_at": "2026-09-04T13:13:38.236193Z",
+    "market_open": false,
+    "open_orders": 0,
+    "positions": 0,
+    "position_snapshots": [],
+    "events": []
+  }
+}
