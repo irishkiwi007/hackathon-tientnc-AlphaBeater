@@ -175,7 +175,7 @@ export default function Home() {
               <span className="muted">CURRENT RUN</span>
               <strong>{run.research_protocol.generator_model}</strong>
             </div>
-            <span className="status held">
+            <span className={`status ${run.risk?.approved ? "ready" : "held"}`}>
               <i /> {run.risk?.approved ? "APPROVED" : "HELD"}
             </span>
           </div>
@@ -333,6 +333,34 @@ export default function Home() {
                       </div>
                       <b>{(holdout.benchmark_return * 100).toFixed(2)}%</b>
                     </div>
+                  </div>
+                )}
+                {holdout && candidate.selected && (
+                  <div className="oos-check">
+                    <span className="kicker">OUT-OF-SAMPLE CHECK</span>
+                    <div className="oos-row">
+                      <div>
+                        <span>Validation excess</span>
+                        <b className={validation.excess_return >= 0 ? "positive" : "loss"}>
+                          {pct(validation.excess_return)}
+                        </b>
+                        <small>selection saw this</small>
+                      </div>
+                      <i>&rarr;</i>
+                      <div>
+                        <span>Holdout excess</span>
+                        <b className={holdout.excess_return >= 0 ? "positive" : "loss"}>
+                          {pct(holdout.excess_return)}
+                        </b>
+                        <small>read once, after choosing</small>
+                      </div>
+                    </div>
+                    <p>
+                      Sharpe fell from {validation.sharpe_ratio.toFixed(2)} to{" "}
+                      {holdout.sharpe_ratio.toFixed(2)}. The gap between these two numbers is what a
+                      backtest cannot show you about itself - which is why the locked period is
+                      never used to choose.
+                    </p>
                   </div>
                 )}
                 <p className="fineprint">

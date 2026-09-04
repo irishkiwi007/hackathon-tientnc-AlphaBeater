@@ -115,6 +115,17 @@ code { display: block; padding: 13px 14px; color: #1a667b; background: #f2f6f7; 
 .bar-line b.loss { color: var(--red); }
 .bar-line b { text-align: right; font-family: var(--font-geist-mono); }
 .fineprint { margin: 15px 0 0; color: #89979d; font-size: 10px; line-height: 1.5; }
+/* The collapse between the period used for selection and the untouched one is the single
+   most honest number this project produces, so it gets its own block. */
+.oos-check { margin-top: 16px; padding: 14px 16px; background: #fbfaf7; border: 1px solid #ece7dd; border-radius: 7px; }
+.oos-row { display: flex; align-items: center; gap: 18px; margin: 10px 0 2px; }
+.oos-row > div { flex: 1; }
+.oos-row span { display: block; color: #7b8a91; font-size: 9px; margin-bottom: 4px; }
+.oos-row b { display: block; font: 700 20px var(--font-geist-mono); }
+.oos-row small { display: block; margin-top: 3px; color: #9aa5aa; font-size: 9px; }
+.oos-row > i { color: #b3a68c; font-style: normal; font-size: 17px; }
+.oos-check > p { margin: 10px 0 0; color: #7c8890; font-size: 10px; line-height: 1.55; }
+.loss { color: var(--red); }
 .contract { margin: 28px 0 8px; font: 750 14px var(--font-geist-mono); letter-spacing: .02em; }
 .contract b { color: #75868f; font-weight: 500; }
 .trade-price { display: flex; align-items: end; gap: 18px; padding-bottom: 23px; border-bottom: 1px solid var(--line); }
