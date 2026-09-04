@@ -19,8 +19,48 @@ ALLOWED_OPERATORS = frozenset(
         "ts_min",
         "ts_max",
         "relative_volume",
+        "abs",
+        "sign",
+        "demean",
+        "ts_rank",
+        "ts_corr",
+        "decay_linear",
     }
 )
+
+
+#: Human-readable call signature for every registered operator.
+#:
+#: Prompts are built from this, so a model is told the exact arity instead of guessing.
+#: `rank` and `zscore` are cross-sectional and take a series only — passing them a window
+#: is the single most common mistake a model makes. Every entry must stay in step with
+#: `ALLOWED_OPERATORS` and with the operator table in `factor_calculator.py`;
+#: `test_dsl.py` enforces the first half of that.
+OPERATOR_SIGNATURES: dict[str, str] = {
+    "add": "add(a, b)",
+    "sub": "sub(a, b)",
+    "mul": "mul(a, b)",
+    "div": "div(a, b)",
+    "neg": "neg(a)",
+    "rank": "rank(series)  # cross-sectional, NO window argument",
+    "zscore": "zscore(series)  # cross-sectional, NO window argument",
+    "delay": "delay(series, window)",
+    "returns": "returns(series, window)",
+    "ts_mean": "ts_mean(series, window)",
+    "ts_std": "ts_std(series, window)",
+    "ts_min": "ts_min(series, window)",
+    "ts_max": "ts_max(series, window)",
+    "relative_volume": "relative_volume(volume, window)",
+    "abs": "abs(a)  # size of a move, ignoring direction",
+    "sign": "sign(a)  # -1, 0 or 1",
+    "demean": (
+        "demean(series)  # cross-sectional, NO window argument; "
+        "this symbol minus the universe average that day - use it for relative strength"
+    ),
+    "ts_rank": "ts_rank(series, window)  # where today sits within its own recent history, 0 to 1",
+    "ts_corr": "ts_corr(series_a, series_b, window)  # rolling correlation of two series",
+    "decay_linear": "decay_linear(series, window)  # weighted average, recent days weighted more",
+}
 
 
 class DSLValidationError(ValueError):

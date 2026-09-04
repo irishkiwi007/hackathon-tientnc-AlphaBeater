@@ -13,6 +13,7 @@ from alphabeater.config import Settings
 from alphabeater.factor_calculator import FactorCalculator
 from alphabeater.llm import GemmaLLM
 from alphabeater.models import MarketObservation
+from alphabeater.universe import RESEARCH_UNIVERSE
 
 
 def _to_frame(bars: list[StockBar]) -> pd.DataFrame:
@@ -47,14 +48,14 @@ def main() -> int:
     try:
         market_data = AlpacaMarketData.from_settings(settings)
         bars = market_data.get_daily_bars(
-            ["SPY", "QQQ", "IWM"],
+            RESEARCH_UNIVERSE,
             start=now - timedelta(days=420),
             end=now,
         )
         frame = _to_frame(bars)
         observation = MarketObservation(
             as_of=max(bar.timestamp for bar in bars).isoformat(),
-            universe=["SPY", "QQQ", "IWM"],
+            universe=RESEARCH_UNIVERSE,
             evidence=_evidence(frame),
         )
         llm = GemmaLLM(

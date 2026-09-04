@@ -5,6 +5,7 @@ from collections.abc import Callable
 from alphabeater.dsl import (
     ALLOWED_FIELDS,
     ALLOWED_OPERATORS,
+    OPERATOR_SIGNATURES,
     referenced_fields,
     validate_expression,
 )
@@ -36,11 +37,16 @@ class FactorAgent:
                 user_prompt=(
                     f"Hypothesis: {hypothesis.model_dump_json()}\n"
                     f"Fields: {sorted(ALLOWED_FIELDS)}\n"
-                    f"Operators: {sorted(ALLOWED_OPERATORS)}\n"
-                    "Every expression must be a function call. Do not use +, -, *, /, "
+                    "Operators - use these EXACT call signatures:\n"
+                    + "".join(
+                        f"  {OPERATOR_SIGNATURES[name]}\n" for name in sorted(ALLOWED_OPERATORS)
+                    )
+                    + "Every expression must be a function call. Do not use +, -, *, /, "
                     "comparisons, brackets, or Python code. Use add(a,b), sub(a,b), "
-                    "mul(a,b), div(a,b), and neg(a) for arithmetic. Rolling operators "
-                    "take a series and a positive integer window. Valid examples: "
+                    "mul(a,b), div(a,b), and neg(a) for arithmetic. Operators listed above "
+                    "with a window argument require a positive integer window. rank and "
+                    "zscore take exactly ONE argument and must never be given a window. "
+                    "Valid examples: "
                     "returns(close,5) and "
                     "mul(returns(close,5),relative_volume(volume,20)). "
                     "Do not subtract or divide an expression by itself. required_fields "

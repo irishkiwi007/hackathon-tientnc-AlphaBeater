@@ -5,6 +5,7 @@ import math
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from alphabeater.dsl import ALLOWED_FIELDS, validate_expression
@@ -84,15 +85,53 @@ class FactorCalculator:
                 lambda values: values.rolling(window, min_periods=window).mean()
             )
             return volume / average
-        if name in {"rank", "zscore"}:
+        if name in {"rank", "zscore", "demean"}:
             self._require_arity(name, args, 1)
             series = self._require_series(name, args[0])
             grouped = series.groupby(frame["timestamp"], sort=False)
             if name == "rank":
                 return grouped.rank(pct=True)
             mean = grouped.transform("mean")
+            if name == "demean":
+                return series - mean
             std = grouped.transform("std")
             return (series - mean) / std
+        if name == "abs":
+            self._require_arity(name, args, 1)
+            return self._require_series(name, args[0]).abs()
+        if name == "sign":
+            self._require_arity(name, args, 1)
+            series = self._require_series(name, args[0])
+            return (series > 0).astype(float) - (series < 0).astype(float)
+        if name in {"ts_rank", "decay_linear"}:
+            self._require_arity(name, args, 2)
+            series = self._require_series(name, args[0])
+            window = self._require_window(name, args[1])
+            grouped = series.groupby(frame["symbol"], sort=False)
+            if name == "ts_rank":
+                return grouped.transform(
+                    lambda values: values.rolling(window, min_periods=window).rank(pct=True)
+                )
+            weights = np.arange(1, window + 1, dtype=float)
+            weights /= weights.sum()
+            return grouped.transform(
+                lambda values: values.rolling(window, min_periods=window).apply(
+                    lambda chunk: float(np.dot(chunk, weights)), raw=True
+                )
+            )
+        if name == "ts_corr":
+            self._require_arity(name, args, 3)
+            left = self._require_series(name, args[0])
+            right = self._require_series(name, args[1])
+            window = self._require_window(name, args[2])
+            result = pd.Series(index=left.index, dtype="float64")
+            for positions in frame.groupby("symbol", sort=False).groups.values():
+                result.loc[positions] = (
+                    left.loc[positions]
+                    .rolling(window, min_periods=window)
+                    .corr(right.loc[positions])
+                )
+            return result
         raise FactorCalculationError(f"operator is not implemented: {name}")
 
     @staticmethod
